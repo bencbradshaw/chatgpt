@@ -24,7 +24,8 @@ type ChatRequest struct {
 	Stream   bool      `json:"stream"`
 }
 type ChatPrompt struct {
-	Prompt string `json:"prompt"`
+	Engine   string    `json:"engine"`
+	Messages []Message `json:"messages"`
 }
 type OpenAIResponse struct {
 	Choices []struct {
@@ -75,19 +76,11 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	openAiSk := os.Getenv("OPEN_AI_SK")
 	// Create a ChatRequest
+	fmt.Println("sending request with engine:", chatPrompt.Engine)
 	chatRequest := ChatRequest{
-		Model:  "gpt-4",
-		Stream: true,
-		Messages: []Message{
-			{
-				Role:    "system",
-				Content: "You are a helpful assistant.",
-			},
-			{
-				Role:    "user",
-				Content: chatPrompt.Prompt, // Replace the user content with the prompt
-			},
-		},
+		Model:    chatPrompt.Engine,
+		Stream:   true,
+		Messages: chatPrompt.Messages,
 	}
 
 	// Marshal the ChatRequest into JSON
@@ -118,6 +111,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println("status code", resp.StatusCode)
+	fmt.Println("status code", resp.Body)
+
 	defer resp.Body.Close()
 
 	// Read the response body line by line (chunk by chunk)

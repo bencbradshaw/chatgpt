@@ -20,7 +20,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "strictNullChecks": false,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "strictPropertyInitialization": false
   },
   "include": ["src"]
 }

@@ -50,6 +50,7 @@ type Chunk struct {
 func handleRequest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "text/event-stream")
 	// Read the request body
 	reqBody, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -146,7 +147,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 			content := choice.Delta.Content
 
 			// Process the content
-			fmt.Println(content)
+			//fmt.Println(content)
 
 			// Write the content to the response
 			_, err = w.Write([]byte(content))

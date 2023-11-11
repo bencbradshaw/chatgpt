@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -19,6 +21,7 @@ type Message struct {
 type ChatRequest struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
+	Stream   bool      `json:"stream"`
 }
 type ChatPrompt struct {
 	Prompt string `json:"prompt"`
@@ -28,6 +31,19 @@ type OpenAIResponse struct {
 		Message struct {
 			Content string `json:"content"`
 		} `json:"message"`
+	} `json:"choices"`
+}
+type Chunk struct {
+	ID      string `json:"id"`
+	Object  string `json:"object"`
+	Created int    `json:"created"`
+	Model   string `json:"model"`
+	Choices []struct {
+		Index int `json:"index"`
+		Delta struct {
+			Content string `json:"content"`
+		} `json:"delta"`
+		FinishReason interface{} `json:"finish_reason"`
 	} `json:"choices"`
 }
 
@@ -59,7 +75,8 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	openAiSk := os.Getenv("OPEN_AI_SK")
 	// Create a ChatRequest
 	chatRequest := ChatRequest{
-		Model: "gpt-4",
+		Model:  "gpt-4",
+		Stream: true,
 		Messages: []Message{
 			{
 				Role:    "system",
@@ -102,37 +119,54 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	// Read the response body
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	// Unmarshal the response body into the struct
-	var openAIResponse OpenAIResponse
-	err = json.Unmarshal(respBody, &openAIResponse)
-	if err != nil {
-		// handle error
-	}
-	// Extract the choices[0].message.content value
-	messageContent := openAIResponse.Choices[0].Message.Content
-	// Define a struct or a map to marshal the extracted value into a JSON response
-	response := map[string]string{
-		"message": messageContent,
-	}
-	// Marshal the struct or map into a JSON response
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		// handle error
-	}
-	_, err = w.Write(jsonResponse)
-	if err != nil {
-		// handle error
-	}
+	// Read the response body line by line (chunk by chunk)
+	reader := bufio.NewReader(resp.Body)
+	var jsonStr string
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			// handle error
+			fmt.Println(err)
+			break
+		}
 
-	if err != nil {
-		fmt.Println(err)
-		return
+		// Accumulate the chunks
+		jsonStr += strings.TrimPrefix(line, "data: ")
+
+		// Try to unmarshal the accumulated chunks into a Chunk struct
+		var chunk Chunk
+		err = json.Unmarshal([]byte(jsonStr), &chunk)
+		if err != nil {
+			// If there's an error, continue to the next chunk
+			continue
+		}
+
+		// Extract the content from the choices array
+		for _, choice := range chunk.Choices {
+			content := choice.Delta.Content
+
+			// Process the content
+			fmt.Println(content)
+
+			// Write the content to the response
+			_, err = w.Write([]byte(content))
+			if err != nil {
+				// handle error
+				fmt.Println(err)
+				break
+			}
+
+			// Flush the response writer
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			} else {
+				fmt.Println("Unable to convert http.ResponseWriter to http.Flusher")
+				break
+			}
+		}
+
+		// Reset the accumulated chunks
+		jsonStr = ""
 	}
 }
 

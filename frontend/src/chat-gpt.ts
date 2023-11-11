@@ -33,25 +33,29 @@ export class ChatGPT extends LitElement {
       width: 800px;
       max-width: 800px;
       padding: 1rem;
-      border: 1px solid #ccc;
+      box-shadow: rgb(255 255 255) 0px 0px 14px 0px;
+      background-color: #323131;
     }
 
     .history.user {
+      width: auto;
       text-align: right;
-      margin: 0.5rem auto 0.5rem 30%;
+      margin: 1rem 10% 1rem auto;
+      border-radius: 10px 10px 0 10px;
     }
     .history.user code {
       text-align: left;
     }
     .history.assistant {
       align-self: flex-start;
-      margin: 0.5rem 30% 0.5rem auto;
+      margin: 1rem 30% 1rem auto;
+      border-radius: 10px 10px 10px 0;
     }
     @media (max-width: 1000px) {
       .history {
         width: auto;
         max-width: 100%;
-        margin: 0.5rem 10px;
+        margin: 0.5rem;
       }
 
       .history.user {
@@ -97,7 +101,12 @@ export class ChatGPT extends LitElement {
     role: 'user' | 'assistant';
     content: string;
   }[] = [];
-
+  async updated() {
+    const codeEls = this.shadowRoot.querySelectorAll<HTMLElement>('code:not([data-highlighted])');
+    codeEls.forEach((block: HTMLElement) => {
+      hljs.highlightElement(block);
+    });
+  }
   async submit() {
     const element = this.shadowRoot?.querySelector('textarea');
     const prompt = element.value;
@@ -166,12 +175,7 @@ export class ChatGPT extends LitElement {
       this.history = [...this.history];
     }
   }
-  async updated() {
-    const codeEls = this.shadowRoot.querySelectorAll<HTMLElement>('code:not([data-highlighted])');
-    codeEls.forEach((block: HTMLElement) => {
-      hljs.highlightElement(block);
-    });
-  }
+
   render() {
     return html`
       <div class="history-outer">

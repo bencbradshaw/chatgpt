@@ -17,25 +17,25 @@ export class ChatGPT extends LitElement {
       padding: 0;
       box-sizing: border-box;
     }
-
     .history-outer {
-      width: 100vw;
-      max-width: 100vw;
-      height: 80vh;
-      max-height: 80vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      overflow-y: auto;
-    }
-    .history-inner {
       display: flex;
       flex-direction: column-reverse;
       align-items: flex-start;
       justify-content: flex-start;
-      max-width: 800px;
+      height: 80vh;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .history {
       width: 800px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .history.user {
+      align-self: flex-end;
+    }
+    .history.openai {
+      align-self: flex-start;
     }
     .inputs-outer {
       width: 100vw;
@@ -52,12 +52,7 @@ export class ChatGPT extends LitElement {
       align-items: flex-end;
       justify-content: center;
     }
-    .history.user {
-      align-self: flex-end;
-    }
-    .history.openai {
-      align-self: flex-start;
-    }
+
     textarea {
       width: 400px;
       max-width: 400px;
@@ -115,17 +110,15 @@ export class ChatGPT extends LitElement {
   render() {
     return html`
       <div class="history-outer">
-        <div class="history-inner">
-          ${[...this.history].reverse().map((item) => {
-            let localContent;
-            if (item.role === 'openai') {
-              localContent = unsafeHTML(DOMPurify.sanitize(marked.parse(item.content)));
-            } else {
-              localContent = item.content;
-            }
-            return html` <p class="history ${item.role}">${localContent}</p> `;
-          })}
-        </div>
+        ${[...this.history].reverse().map((item) => {
+          let localContent;
+          if (item.role === 'openai') {
+            localContent = unsafeHTML(DOMPurify.sanitize(marked.parse(item.content)));
+          } else {
+            localContent = item.content;
+          }
+          return html` <p class="history ${item.role}">${localContent}</p> `;
+        })}
       </div>
       <div class="inputs-outer">
         <div class="inputs-inner">

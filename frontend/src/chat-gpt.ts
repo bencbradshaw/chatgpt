@@ -47,10 +47,6 @@ export class ChatGPT extends LitElement {
       margin: 1rem 30% 1rem auto;
       border-radius: 10px 10px 10px 0;
     }
-    p {
-      display: flex;
-      flex-direction: column;
-    }
     img {
       max-width: 100%;
       max-height: 500px;

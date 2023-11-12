@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -13,6 +14,20 @@ import (
 
 	"github.com/joho/godotenv"
 )
+
+const (
+	openAiBaseUrl        = "https://api.openai.com/v1"
+	openAiChatEndpoint   = openAiBaseUrl + "/chat/completions"
+	openAiImageEndpoint  = openAiBaseUrl + "/images/generations"
+	contentTypeHeader    = "Content-Type"
+	contentTypeJSON      = "application/json"
+	authHeaderFmt        = "Bearer %s"
+	envOpenAiSk          = "OPEN_AI_SK"
+	accessControlAllow   = "Access-Control-Allow-Origin"
+	accessControlHeaders = "Access-Control-Allow-Headers"
+)
+
+var httpClient = &http.Client{}
 
 type Message struct {
 	Role    string `json:"role"`
@@ -24,10 +39,12 @@ type ChatRequest struct {
 	Messages []Message `json:"messages"`
 	Stream   bool      `json:"stream"`
 }
+
 type ChatPrompt struct {
 	Engine   string    `json:"engine"`
 	Messages []Message `json:"messages"`
 }
+
 type OpenAIResponse struct {
 	Choices []struct {
 		Message struct {
@@ -35,6 +52,7 @@ type OpenAIResponse struct {
 		} `json:"message"`
 	} `json:"choices"`
 }
+
 type Chunk struct {
 	ID      string `json:"id"`
 	Object  string `json:"object"`
@@ -47,96 +65,6 @@ type Chunk struct {
 		} `json:"delta"`
 		FinishReason interface{} `json:"finish_reason"`
 	} `json:"choices"`
-}
-
-func handleChatRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("handling chat request")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Content-Type", "text/event-stream")
-	reqBody, err := io.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer r.Body.Close()
-	var chatPrompt ChatPrompt
-	err = json.Unmarshal(reqBody, &chatPrompt)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	err = godotenv.Load()
-	if err != nil {
-		fmt.Println("Error loading .env file")
-		return
-	}
-	openAiSk := os.Getenv("OPEN_AI_SK")
-	fmt.Println("sending request with engine:", chatPrompt.Engine)
-	chatRequest := ChatRequest{
-		Model:    chatPrompt.Engine,
-		Stream:   true,
-		Messages: chatPrompt.Messages,
-	}
-	jsonData, err := json.Marshal(chatRequest)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	data := bytes.NewBuffer(jsonData)
-	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", data)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", openAiSk))
-	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println("status code", resp.StatusCode)
-	fmt.Println("status code", resp.Body)
-
-	defer resp.Body.Close()
-
-	reader := bufio.NewReader(resp.Body)
-	var jsonStr string
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Println(err)
-			break
-		}
-
-		jsonStr += strings.TrimPrefix(line, "data: ")
-
-		var chunk Chunk
-		err = json.Unmarshal([]byte(jsonStr), &chunk)
-		if err != nil {
-			continue
-		}
-
-		for _, choice := range chunk.Choices {
-			content := choice.Delta.Content
-
-			_, err = w.Write([]byte(content))
-			if err != nil {
-				fmt.Println(err)
-				break
-			}
-
-			if f, ok := w.(http.Flusher); ok {
-				f.Flush()
-			} else {
-				fmt.Println("Unable to convert http.ResponseWriter to http.Flusher")
-				break
-			}
-		}
-		jsonStr = ""
-	}
 }
 
 type ImageRequest struct {
@@ -153,84 +81,179 @@ type ImageResponse struct {
 	} `json:"data"`
 }
 
-func handleImageRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("handling image request")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Content-Type", "application/json")
-	var imgReq ImageRequest
-	if err := json.NewDecoder(r.Body).Decode(&imgReq); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func init() {
+	// Load environment variables at the start of the application.
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+}
+
+func respondWithError(w http.ResponseWriter, errMsg string, statusCode int) {
+	http.Error(w, errMsg, statusCode)
+	log.Println(errMsg)
+}
+
+func doPostRequest(url string, body interface{}, authToken string) (*http.Response, error) {
+	jsonData, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf(authHeaderFmt, authToken))
+	req.Header.Set(contentTypeHeader, contentTypeJSON)
+
+	return httpClient.Do(req)
+}
+
+func handleChatRequest(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling chat request")
+	defer r.Body.Close()
+
+	var chatPrompt ChatPrompt
+	if err := json.NewDecoder(r.Body).Decode(&chatPrompt); err != nil {
+		respondWithError(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	client := &http.Client{}
-	reqBody, _ := json.Marshal(imgReq)
-	fmt.Println("sending request with body:", string(reqBody))
-	req, err := http.NewRequest("POST", "https://api.openai.com/v1/images/generations", bytes.NewBuffer(reqBody))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+
+	authToken := os.Getenv(envOpenAiSk)
+
+	chatRequest := ChatRequest{
+		Model:    chatPrompt.Engine,
+		Stream:   true,
+		Messages: chatPrompt.Messages,
 	}
-	err = godotenv.Load()
+
+	resp, err := doPostRequest(openAiChatEndpoint, chatRequest, authToken)
 	if err != nil {
-		fmt.Println("Error loading .env file")
-		return
-	}
-	openAiSk := os.Getenv("OPEN_AI_SK")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", openAiSk))
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, "Error making a request to OpenAI API: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
-	var res ImageResponse
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	processChatStream(resp.Body, w)
+}
+
+func processChatStream(openAIStream io.Reader, w http.ResponseWriter) {
+	w.Header().Set(contentTypeHeader, "text/event-stream")
+	w.Header().Set(accessControlAllow, "*")
+
+	reader := bufio.NewReader(openAIStream)
+	var jsonStr string
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				// If EOF is encountered, it may just be the end of the stream.
+				// Check if you should be reconnecting or ending gracefully here.
+				log.Println("Stream ended normally with EOF")
+				break
+			}
+			log.Println("Error reading streaming response:", err)
+			break
+		}
+		jsonStr += strings.TrimPrefix(line, "data: ")
+		var chunk Chunk
+		if err := json.Unmarshal([]byte(jsonStr), &chunk); err != nil {
+			continue
+		}
+		// EOF might occur naturally here if there are no more choices - this is a normal termination.
+		if len(chunk.Choices) == 0 {
+			log.Println("No more choices, stream ended normally")
+			break
+		}
+		for _, choice := range chunk.Choices {
+			content := choice.Delta.Content
+			if _, err := w.Write([]byte(content)); err != nil {
+				log.Println("Error writing to response writer:", err)
+				break
+			}
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			} else {
+				log.Println("Unable to convert http.ResponseWriter to http.Flusher")
+				break
+			}
+		}
+		jsonStr = ""
+	}
+}
+
+func handleImageRequest(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling image request")
+	defer r.Body.Close()
+	var imgReq ImageRequest
+	if err := json.NewDecoder(r.Body).Decode(&imgReq); err != nil {
+		respondWithError(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("dalle req status code: ", resp.StatusCode)
+
+	authToken := os.Getenv(envOpenAiSk)
+
+	resp, err := doPostRequest(openAiImageEndpoint, imgReq, authToken)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, "Error making request to OpenAI API: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	var res ImageResponse
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		respondWithError(w, "Error decoding OpenAI response: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	imageUrl := res.Data[0].URL
-	resp2, err := http.Get(imageUrl)
+	downloadAndSaveImage(imageUrl, w)
+}
+
+func downloadAndSaveImage(imageUrl string, w http.ResponseWriter) {
+	w.Header().Set(contentTypeHeader, contentTypeJSON)
+	w.Header().Set(accessControlAllow, "*")
+
+	resp, err := http.Get(imageUrl)
 	if err != nil {
-		fmt.Println(err)
-	}
-	defer resp2.Body.Close()
-	t := time.Now()
-	filename := fmt.Sprintf("./frontend/src/assets/dall-e/dall-e_%s.png", t.Format("20060102_150405")) // Create a new file
-	out, err := os.Create(filename)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer out.Close()
-	_, err = io.Copy(out, resp2.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-	filename = strings.Replace(filename, "./frontend", "", 1)
-	fileData := map[string]string{
-		"url": filename,
-	}
-	jsonData, err := json.Marshal(fileData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, "Error downloading image from URL: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write(jsonData)
+	defer resp.Body.Close()
+
+	t := time.Now()
+	filename := fmt.Sprintf("./frontend/src/assets/dall-e/dall-e_%s.png", t.Format("20060102_150405"))
+	out, err := os.Create(filename)
+	if err != nil {
+		respondWithError(w, "Error creating image file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer out.Close()
+
+	if _, err = io.Copy(out, resp.Body); err != nil {
+		respondWithError(w, "Error saving image: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	respondWithJSON(w, map[string]string{"url": strings.Replace(filename, "./frontend", "", 1)})
+}
+
+func respondWithJSON(w http.ResponseWriter, payload interface{}) {
+	response, err := json.Marshal(payload)
+	if err != nil {
+		respondWithError(w, "Error encoding JSON response: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(response)
 }
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Handle preflight (CORS) request
 		if r.Method == http.MethodOptions {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+			w.Header().Set(accessControlAllow, "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+			w.Header().Set(accessControlHeaders, "Accept, Content-Type")
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 		switch r.URL.Path {
@@ -242,8 +265,9 @@ func main() {
 			http.NotFound(w, r)
 		}
 	})
-	fmt.Println("Starting server on port 8080")
+
+	log.Println("Starting server on port 8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
-		fmt.Println(err)
+		log.Fatalf("Server failed to start: %v", err)
 	}
 }

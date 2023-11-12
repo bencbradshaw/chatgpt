@@ -1,5 +1,5 @@
-import hljs from 'highlight.js';
 import DOMPurify from 'dompurify';
+import hljs from 'highlight.js';
 import { css, html, LitElement, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
@@ -128,7 +128,8 @@ export class ChatGPT extends LitElement {
     return response;
   }
 
-  async submit() {
+  async submit(e: Event & { target: HTMLTextAreaElement }) {
+    if (!e.target.value) return;
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
     if (!engine.includes('dall-e')) {
       await this.runChatReq();
@@ -305,9 +306,10 @@ export class ChatGPT extends LitElement {
           <textarea
             @keydown=${(e) => {
               if (e.key === 'Enter' && e.shiftKey) return;
+
               if (e.key === 'Enter') {
                 e.preventDefault();
-                this.submit();
+                this.submit(e);
                 return;
               }
             }}></textarea>

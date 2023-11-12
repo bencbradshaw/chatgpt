@@ -30,21 +30,25 @@ export class ChatGPT extends LitElement {
     }
     .history {
       width: 800px;
+      min-width: 800px;
       max-width: 800px;
-      padding: 1rem;
+      padding: 1rem 2rem;
       box-shadow: rgb(255 255 255) 0px 0px 14px 0px;
       background-color: #323131;
     }
 
     .history.user {
       width: auto;
-      margin: 1rem 10% 1rem auto;
+      min-width: auto;
+      max-width: auto;
+      margin: 1rem 2rem 1rem 0;
       border-radius: 10px 10px 0 10px;
+      align-self: flex-end;
     }
 
     .history.assistant {
       align-self: flex-start;
-      margin: 1rem 30% 1rem auto;
+      margin: 1rem 0 1rem 2rem;
       border-radius: 10px 10px 10px 0;
     }
     img {
@@ -95,13 +99,14 @@ export class ChatGPT extends LitElement {
     }
     button {
       margin: 0 10px;
+      cursor: pointer;
     }
   `;
   @state() loading = false;
   @state() history: {
     role: 'user' | 'assistant';
     content: string;
-  }[] = [];
+  }[] = sessionStorage.getItem('history') ? JSON.parse(sessionStorage.getItem('history')) : [];
 
   async updated() {
     const codeEls = this.shadowRoot.querySelectorAll<HTMLElement>('code:not([data-highlighted])');
@@ -110,120 +115,105 @@ export class ChatGPT extends LitElement {
     });
   }
 
+  async performPostRequest(endpoint: string, body: any): Promise<any> {
+    this.loading = true;
+    const response = await fetch(`http://localhost:8080${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: endpoint === '/' ? 'text/event-stream' : 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    this.loading = false;
+    return response;
+  }
+
   async submit() {
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
     if (!engine.includes('dall-e')) {
       await this.runChatReq();
-    }
-    if (engine.includes('dall-e')) {
+    } else {
       await this.runImageReq();
     }
   }
 
   async runChatReq() {
-    this.loading = true;
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
-    const element = this.shadowRoot?.querySelector('textarea');
+    const element = this.shadowRoot.querySelector('textarea');
     const prompt = element.value;
     const includeContext = document.querySelector<ChatNav>('chat-nav').includeContext;
     element.value = '';
-    this.history = [
-      ...this.history,
-      {
-        role: 'user',
-        content: prompt
-      }
-    ];
-    const resp = await fetch('http://localhost:8080', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // prettier-ignore
-        'accept': 'text/event-stream'
-      },
-      body: JSON.stringify({
-        ...(includeContext
-          ? {
-              messages: [
-                {
-                  role: 'system',
-                  content: document.querySelector<ChatNav>('chat-nav').systemMessage
-                },
-                ...this.history.map((item) => {
-                  return {
-                    role: item.role,
-                    content: item.content
-                  };
-                })
-              ]
-            }
-          : {
-              messages: [
-                {
-                  role: 'system',
-                  content: document.querySelector<ChatNav>('chat-nav').systemMessage
-                },
-                {
-                  role: 'user',
-                  content: prompt
-                }
-              ]
-            }),
-        engine: engine
-      })
-    });
-    const reader = resp.body.getReader();
+    this.addToHistory('user', prompt);
+
+    const responseBody = {
+      ...(includeContext
+        ? {
+            messages: [
+              { role: 'system', content: document.querySelector<ChatNav>('chat-nav').systemMessage },
+              ...this.history.map((item) => ({ role: item.role, content: item.content }))
+            ]
+          }
+        : {
+            messages: [
+              { role: 'system', content: document.querySelector<ChatNav>('chat-nav').systemMessage },
+              { role: 'user', content: prompt }
+            ]
+          }),
+      engine: engine
+    };
+
+    const response = await this.performPostRequest('/', responseBody);
+    const reader = response.body.getReader();
     let message = '';
     const nextIndex = this.history.length;
-    this.history[nextIndex] = {
-      role: 'assistant',
-      content: ''
-    };
+    this.addToHistory('assistant', '');
+
     while (true) {
-      this.loading = false;
       const { done, value } = await reader.read();
       if (done) break;
       message = new TextDecoder().decode(value);
-      this.history[nextIndex].content += message;
-      this.history = [...this.history];
+      this.updateAssistantResponse(nextIndex, message);
+    }
+    this.writeToSessionStorage();
+  }
+  writeToSessionStorage() {
+    try {
+      sessionStorage.setItem('history', JSON.stringify(this.history));
+    } catch (err) {
+      console.log('error writing to session storage. probably full. clear history and try again', err);
     }
   }
   async runImageReq() {
-    this.loading = true;
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
-    const element = this.shadowRoot?.querySelector('textarea');
+    const element = this.shadowRoot.querySelector('textarea');
     const prompt = element.value;
     element.value = '';
-    this.history = [
-      ...this.history,
-      {
-        role: 'user',
-        content: prompt
-      }
-    ];
-    const resp = await fetch('http://localhost:8080/image', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: engine,
-        prompt: prompt,
-        n: 1,
-        size: '1024x1024'
-      })
-    });
-    const imgResp = (await resp.json()) as { url: string };
-    const nextIndex = this.history.length;
-    this.history[nextIndex] = {
-      role: 'assistant',
-      // prettier-ignore
-      content: `
-![image](${imgResp.url})
-`
+    this.addToHistory('user', prompt);
+
+    const requestBody = {
+      model: engine,
+      prompt: prompt,
+      n: 1,
+      size: '1024x1024'
     };
-    this.history = [...this.history];
-    this.loading = false;
+
+    const response = await this.performPostRequest('/image', requestBody);
+    const imgResp = (await response.json()) as { url: string };
+    const imgMarkdown = `![image](${imgResp.url})\n`;
+    this.addToHistory('assistant', imgMarkdown);
+  }
+
+  addToHistory(role: 'user' | 'assistant', content: string) {
+    this.history = [...this.history, { role, content }];
+    this.writeToSessionStorage();
+  }
+
+  updateAssistantResponse(index: number, newContent: string) {
+    if (this.history[index]) {
+      this.history[index].content += newContent;
+      this.history = [...this.history];
+    }
   }
 
   get loadingIcon() {

@@ -205,6 +205,11 @@ func handleImageRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(res.Data) == 0 { // Check to ensure we have at least one image in the response
+		respondWithError(w, "No images returned by OpenAI", http.StatusInternalServerError)
+		return
+	}
+
 	imageUrl := res.Data[0].URL
 	downloadAndSaveImage(imageUrl, w)
 }

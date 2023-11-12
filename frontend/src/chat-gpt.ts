@@ -116,10 +116,10 @@ export class ChatGPT extends LitElement {
 
   async submit() {
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
-    if (engine !== 'dall-e-3') {
+    if (!engine.includes('dall-e')) {
       await this.runChatReq();
     }
-    if (engine === 'dall-e-3') {
+    if (engine.includes('dall-e')) {
       await this.runImageReq();
     }
   }

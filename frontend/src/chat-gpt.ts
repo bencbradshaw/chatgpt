@@ -92,16 +92,16 @@ export class ChatGPT extends LitElement {
       background-color: var(--chatbox-bg-color);
       color: white;
       border: 1px solid #474747; /* a slightly contrasting border color */
-      padding: 10px;
+      padding: 1rem;
       border-radius: 5px;
       min-height: calc(4rem + 12px);
       max-height: calc(20vh - 2rem);
       margin: 0 10px;
-      padding: 6px 10px;
       min-width: 800px;
       max-width: 800px;
       font-family: 'Arial', sans-serif;
       font-size: 1rem;
+      resize: none;
     }
     button {
       margin: 0 10px;

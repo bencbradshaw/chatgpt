@@ -45,7 +45,7 @@ export class ChatGPT extends LitElement {
       max-width: 800px;
       padding: 1rem 2rem;
       box-shadow: rgb(255 255 255) 0px 0px 14px 0px;
-      background-color: #323131;
+      background-color: var(--primary-bg-color);
     }
     .history.user {
       margin-left: 2rem;
@@ -89,12 +89,19 @@ export class ChatGPT extends LitElement {
     }
 
     textarea {
+      background-color: var(--chatbox-bg-color);
+      color: white;
+      border: 1px solid #474747; /* a slightly contrasting border color */
+      padding: 10px;
+      border-radius: 5px;
       min-height: calc(4rem + 12px);
       max-height: calc(20vh - 2rem);
       margin: 0 10px;
       padding: 6px 10px;
       min-width: 800px;
       max-width: 800px;
+      font-family: 'Arial', sans-serif;
+      font-size: 1rem;
     }
     button {
       margin: 0 10px;

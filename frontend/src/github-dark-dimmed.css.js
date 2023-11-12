@@ -8,6 +8,9 @@ export const githubDarkDimmed = css`
   code.hljs {
     padding: 3px 5px;
   }
+  .hljs {
+    background-color: #22272e;
+  }
   */.hljs {
     color: #adbac7;
     background: #22272e;

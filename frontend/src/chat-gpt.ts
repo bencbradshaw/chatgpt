@@ -1,11 +1,21 @@
 import hljs from 'highlight.js';
+import DOMPurify from 'dompurify';
 import { css, html, LitElement, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked } from 'marked';
 import { ChatNav } from './chat-nav.js';
 import { githubDarkDimmed } from './github-dark-dimmed.css.js';
-
+const renderer = {
+  image(href, title, text) {
+    return `
+      <div style="display: flex;">
+        <img src="${href}" alt="${text}" title="${title}" />
+    </div>
+    `;
+  }
+};
+marked.use({ renderer });
 @customElement('chat-gpt')
 export class ChatGPT extends LitElement {
   static styles = css`
@@ -21,12 +31,13 @@ export class ChatGPT extends LitElement {
     .history-outer {
       display: flex;
       flex-direction: column-reverse;
-      align-items: flex-start;
+      align-items: center;
       justify-content: flex-start;
       height: calc(80vh - 25px);
       max-height: calc(80vh - 25px);
       overflow-y: auto;
       max-width: 100%;
+      padding: 0 5%;
     }
     .history {
       width: 800px;
@@ -36,20 +47,13 @@ export class ChatGPT extends LitElement {
       box-shadow: rgb(255 255 255) 0px 0px 14px 0px;
       background-color: #323131;
     }
-
     .history.user {
-      width: auto;
-      min-width: auto;
-      max-width: auto;
-      margin: 1rem 2rem 1rem 0;
-      border-radius: 10px 10px 0 10px;
-      align-self: flex-end;
+      margin-left: 2rem;
+      border-radius: 16px 16px 0 16px;
     }
-
     .history.assistant {
-      align-self: flex-start;
-      margin: 1rem 0 1rem 2rem;
-      border-radius: 10px 10px 10px 0;
+      border-radius: 16px 16px 16px 0;
+      margin-right: 2rem;
     }
     img {
       max-width: 100%;
@@ -57,18 +61,14 @@ export class ChatGPT extends LitElement {
       margin: 0 auto;
     }
     @media (max-width: 1000px) {
+      .history-outer {
+        padding: 0 1rem;
+      }
       .history {
         width: auto;
+        min-width: auto;
         max-width: 100%;
         margin: 0.5rem;
-      }
-
-      .history.user {
-        align-self: flex-end;
-      }
-
-      .history.assistant {
-        align-self: flex-start;
       }
     }
     .inputs-outer {
@@ -85,17 +85,16 @@ export class ChatGPT extends LitElement {
       display: flex;
       align-items: flex-end;
       justify-content: center;
+      padding: 0.5rem;
     }
 
     textarea {
-      min-height: calc(1rem + 12px);
-      width: 400px;
-      min-width: 400px;
-      height: 50px;
-      max-height: 20vh;
+      min-height: calc(4rem + 12px);
+      max-height: calc(20vh - 2rem);
       margin: 0 10px;
       padding: 6px 10px;
-      max-width: 80vw;
+      min-width: 800px;
+      max-width: 800px;
     }
     button {
       margin: 0 10px;
@@ -193,6 +192,7 @@ export class ChatGPT extends LitElement {
     form.append('engine', engine);
     const response = await this.performPostRequest('http://localhost:8080/vision', form);
   }
+
   writeToSessionStorage() {
     try {
       sessionStorage.setItem('history', JSON.stringify(this.history));
@@ -200,6 +200,7 @@ export class ChatGPT extends LitElement {
       console.log('error writing to session storage. probably full. clear history and try again', err);
     }
   }
+
   async runImageReq() {
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
     const element = this.shadowRoot.querySelector('textarea');
@@ -216,7 +217,7 @@ export class ChatGPT extends LitElement {
 
     const response = await this.performPostRequest('/image', requestBody);
     const imgResp = (await response.json()) as { url: string };
-    const imgMarkdown = `![image](${imgResp.url})\n`;
+    const imgMarkdown = `![image](${imgResp.url})`;
     this.addToHistory('assistant', imgMarkdown);
   }
 
@@ -294,7 +295,7 @@ export class ChatGPT extends LitElement {
       <div class="history-outer">
         ${this.loadingIcon}
         ${[...this.history].reverse().map((item) => {
-          const localContent = unsafeHTML(marked.parse(item.content));
+          const localContent = unsafeHTML(marked.parse(DOMPurify.sanitize(item.content)));
 
           return html` <p class="history ${item.role}">${localContent}</p> `;
         })}

@@ -120,7 +120,7 @@ export class ChatGPT extends LitElement {
     const response = await fetch(`http://localhost:8080${endpoint}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json', // TODO update to allow form data for image upload
         Accept: endpoint === '/' ? 'text/event-stream' : 'application/json'
       },
       body: JSON.stringify(body)
@@ -133,8 +133,12 @@ export class ChatGPT extends LitElement {
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
     if (!engine.includes('dall-e')) {
       await this.runChatReq();
-    } else {
+    } else if (engine.includes('dall-e')) {
       await this.runImageReq();
+    } else if (engine.includes('gpt-4-vision-preview')) {
+      await this.runVisionReq();
+    } else {
+      console.log('invalid engine');
     }
   }
 
@@ -146,7 +150,7 @@ export class ChatGPT extends LitElement {
     element.value = '';
     this.addToHistory('user', prompt);
 
-    const responseBody = {
+    const reqBody = {
       ...(includeContext
         ? {
             messages: [
@@ -163,7 +167,7 @@ export class ChatGPT extends LitElement {
       engine: engine
     };
 
-    const response = await this.performPostRequest('/', responseBody);
+    const response = await this.performPostRequest('/', reqBody);
     const reader = response.body.getReader();
     let message = '';
     const nextIndex = this.history.length;
@@ -176,6 +180,18 @@ export class ChatGPT extends LitElement {
       this.updateAssistantResponse(nextIndex, message);
     }
     this.writeToSessionStorage();
+  }
+
+  async runVisionReq() {
+    const engine = document.querySelector<ChatNav>('chat-nav').engine;
+    const element = this.shadowRoot.querySelector('textarea');
+    const prompt = element.value;
+    element.value = '';
+    // make a form submit to /vision
+    const form = new FormData();
+    form.append('prompt', prompt);
+    form.append('engine', engine);
+    const response = await this.performPostRequest('http://localhost:8080/vision', form);
   }
   writeToSessionStorage() {
     try {

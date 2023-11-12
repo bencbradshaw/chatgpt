@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -251,6 +252,125 @@ func respondWithJSON(w http.ResponseWriter, payload interface{}) {
 	w.Write(response)
 }
 
+// create another function to handle vision request
+// it will accept a file, and encode it into base 64
+// then it will post this body
+//
+//	payload = {
+//	    "model": "gpt-4-vision-preview",
+//	    "messages": [
+//	      {
+//	        "role": "user",
+//	        "content": [
+//	          {
+//	            "type": "text",
+//	            "text": "What’s in this image?"
+//	          },
+//	          {
+//	            "type": "image_url",
+//	            "image_url": {
+//	              "url": f"data:image/jpeg;base64,{base64_image}"
+//	            }
+//	          }
+//	        ]
+//	      }
+//	    ],
+//	    "max_tokens": 300
+//	}
+//
+// to the same endpoint as the chat request
+
+func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling vision request")
+	if r.Method != http.MethodPost {
+		respondWithError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read the file from the request
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		respondWithError(w, "Invalid file in request", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	if header.Size == 0 {
+		respondWithError(w, "Empty file provided", http.StatusBadRequest)
+		return
+	}
+
+	contentType := header.Header.Get(contentTypeHeader)
+	if !strings.HasPrefix(contentType, "image/") {
+		respondWithError(w, "Invalid file type", http.StatusBadRequest)
+		return
+	}
+
+	// Encode the file into base64
+	buf := new(bytes.Buffer)
+	encoder := base64.NewEncoder(base64.StdEncoding, buf)
+	_, err = io.Copy(encoder, file)
+	if err != nil {
+		respondWithError(w, "Error encoding file to base64", http.StatusInternalServerError)
+		return
+	}
+	if err = encoder.Close(); err != nil {
+		respondWithError(w, "Error closing encoder", http.StatusInternalServerError)
+		return
+	}
+	base64Image := buf.String()
+
+	// Create the payload
+	visionPayload := map[string]interface{}{
+		"model": "gpt-4-vision-preview",
+		"messages": []map[string]interface{}{
+			{
+				"role": "user",
+				"content": []map[string]interface{}{
+					{
+						"type": "text",
+						"text": "What’s in this image?",
+					},
+					{
+						"type": "image_url",
+						"image_url": map[string]string{
+							"url": fmt.Sprintf("data:image/jpeg;base64,%s", base64Image),
+						},
+					},
+				},
+			},
+		},
+		"max_tokens": 300,
+	}
+
+	authToken := os.Getenv(envOpenAiSk)
+	resp, err := doPostRequest(openAiChatEndpoint, visionPayload, authToken)
+	if err != nil {
+		respondWithError(w, "Error making a request to OpenAI API: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Process the response
+	if resp.StatusCode != http.StatusOK {
+		var apiError map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&apiError); err == nil {
+			respondWithJSON(w, apiError)
+		} else {
+			respondWithError(w, "Error with OpenAI API", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	var apiResponse OpenAIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		respondWithError(w, "Error decoding OpenAI API response: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	respondWithJSON(w, apiResponse)
+}
+
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Handle preflight (CORS) request
@@ -266,6 +386,8 @@ func main() {
 			handleChatRequest(w, r)
 		case "/image":
 			handleImageRequest(w, r)
+		case "/vision":
+			handleVisionRequest(w, r)
 		default:
 			http.NotFound(w, r)
 		}

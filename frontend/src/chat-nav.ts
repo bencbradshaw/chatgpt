@@ -9,7 +9,18 @@ export class ChatNav extends LitElement {
         height: 25px;
       }
       button {
+        margin: 0 10px;
         cursor: pointer;
+        background-color: var(--button-bg-color);
+        outline: none;
+        border: none;
+        padding: 0.25rem 1rem;
+      }
+      button:hover {
+        background-color: var(--button-bg-color-hover);
+      }
+      button:active {
+        background-color: var(--button-bg-color);
       }
     `;
   }

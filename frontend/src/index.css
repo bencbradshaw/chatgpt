@@ -8,6 +8,7 @@
   --primary-bg-color: #282c34;
   --chatbox-bg-color: #353b45;
   --button-bg-color: #3e4451;
+  --button-bg-color-hover: #5e687e;
   background-color: var(--primary-bg-color);
 
   font-synthesis: none;

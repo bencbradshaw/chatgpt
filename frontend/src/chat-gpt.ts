@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
 import { css, html, LitElement, nothing } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked } from 'marked';
 import { ChatNav } from './chat-nav.js';
@@ -106,8 +106,19 @@ export class ChatGPT extends LitElement {
     button {
       margin: 0 10px;
       cursor: pointer;
+      background-color: var(--button-bg-color);
+      outline: none;
+      border: none;
+      padding: 0.25rem 1rem;
+    }
+    button:hover {
+      background-color: var(--button-bg-color-hover);
+    }
+    button:active {
+      background-color: var(--button-bg-color);
     }
   `;
+  @query('textarea') textareaEl: HTMLTextAreaElement;
   @state() loading = false;
   @state() history: {
     role: 'user' | 'assistant';
@@ -136,7 +147,7 @@ export class ChatGPT extends LitElement {
   }
 
   async submit(e: Event & { target: HTMLTextAreaElement }) {
-    if (!e.target.value) return;
+    if (!this.textareaEl.value) return;
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
     if (!engine.includes('dall-e')) {
       await this.runChatReq();
@@ -151,7 +162,7 @@ export class ChatGPT extends LitElement {
 
   async runChatReq() {
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
-    const element = this.shadowRoot.querySelector('textarea');
+    const element = this.textareaEl;
     const prompt = element.value;
     const includeContext = document.querySelector<ChatNav>('chat-nav').includeContext;
     element.value = '';
@@ -191,7 +202,7 @@ export class ChatGPT extends LitElement {
 
   async runVisionReq() {
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
-    const element = this.shadowRoot.querySelector('textarea');
+    const element = this.textareaEl;
     const prompt = element.value;
     element.value = '';
     // make a form submit to /vision
@@ -211,7 +222,7 @@ export class ChatGPT extends LitElement {
 
   async runImageReq() {
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
-    const element = this.shadowRoot.querySelector('textarea');
+    const element = this.textareaEl;
     const prompt = element.value;
     element.value = '';
     this.addToHistory('user', prompt);

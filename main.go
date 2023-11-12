@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,8 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 const (
@@ -94,7 +97,7 @@ func respondWithError(w http.ResponseWriter, errMsg string, statusCode int) {
 	log.Println(errMsg)
 }
 
-func doPostRequest(url string, body interface{}, authToken string) (*http.Response, error) {
+func doPostRequest(url string, body interface{}, auth interface{}) (*http.Response, error) {
 	jsonData, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -103,7 +106,22 @@ func doPostRequest(url string, body interface{}, authToken string) (*http.Respon
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf(authHeaderFmt, authToken))
+
+	switch v := auth.(type) {
+	case string:
+		// If the auth is a string, use it directly as a bearer token.
+		req.Header.Set("Authorization", fmt.Sprintf(authHeaderFmt, v))
+	case oauth2.TokenSource:
+		// If the auth is a TokenSource, get a token and apply it.
+		token, err := v.Token()
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", fmt.Sprintf(authHeaderFmt, token.AccessToken))
+	default:
+		// If none of the types match, return an error.
+		return nil, fmt.Errorf("unsupported authorization type %T", auth)
+	}
 	req.Header.Set(contentTypeHeader, contentTypeJSON)
 
 	return httpClient.Do(req)
@@ -371,6 +389,49 @@ func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, apiResponse)
 }
 
+func handleVertexRequest(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling Google Vertex AI request")
+	if r.Method != http.MethodPost {
+		respondWithError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	defer r.Body.Close()
+
+	vertexEndpoint := os.Getenv("VERTEX_ENDPOINT")
+	key, err := os.ReadFile("gcp-vertex-sk.json")
+	if err != nil {
+		respondWithError(w, "Error reading service account key file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	creds, err := google.CredentialsFromJSON(context.Background(), key, "https://www.googleapis.com/auth/cloud-platform")
+	if err != nil {
+		respondWithError(w, "Error obtaining Google credentials from JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tokenSource := creds.TokenSource
+
+	var requestBody map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		respondWithError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := doPostRequest(vertexEndpoint, requestBody, tokenSource)
+	if err != nil {
+		respondWithError(w, "Error making a request to Google Vertex AI API: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Copy the response from the Vertex AI API to the client
+	w.Header().Set(contentTypeHeader, contentTypeJSON)
+	w.WriteHeader(resp.StatusCode)
+	if _, err := io.Copy(w, resp.Body); err != nil {
+		log.Println("Error copying Vertex AI API response to client:", err)
+	}
+}
+
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Handle preflight (CORS) request
@@ -388,6 +449,8 @@ func main() {
 			handleImageRequest(w, r)
 		case "/vision":
 			handleVisionRequest(w, r)
+		case "/vertex":
+			handleVertexRequest(w, r)
 		default:
 			http.NotFound(w, r)
 		}

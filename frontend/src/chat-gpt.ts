@@ -1,17 +1,19 @@
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
-import { css, html, LitElement, nothing } from 'lit';
+import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked } from 'marked';
+import { chatGptStyles } from './chat-gpt.css.js';
 import { ChatNav } from './chat-nav.js';
 import { githubDarkDimmed } from './github-dark-dimmed.css.js';
+import { loadingIcon } from './loading-icon.js';
 const renderer = {
-  image(href, title, text) {
+  image(href = '', title = 'image', text = 'image') {
     return `
       <div style="display: flex;">
         <img src="${href}" alt="${text}" title="${title}" />
-    </div>
+      </div>
     `;
   }
 };
@@ -20,103 +22,7 @@ marked.use({ renderer });
 export class ChatGPT extends LitElement {
   static styles = css`
     ${githubDarkDimmed}
-    :host {
-      display: flex;
-      flex-direction: column;
-      height: calc(100vh - 25px);
-    }
-    :host > * {
-      box-sizing: border-box;
-    }
-    .history-outer {
-      display: flex;
-      flex-direction: column-reverse;
-      align-items: center;
-      justify-content: flex-start;
-      height: calc(80vh - 25px);
-      max-height: calc(80vh - 25px);
-      overflow-y: auto;
-      max-width: 100%;
-      padding: 0 5%;
-    }
-    .history {
-      width: 800px;
-      min-width: 800px;
-      max-width: 800px;
-      padding: 1rem 2rem;
-      box-shadow: rgb(255 255 255) 0px 0px 14px 0px;
-      background-color: var(--primary-bg-color);
-    }
-    .history.user {
-      margin-left: 2rem;
-      border-radius: 16px 16px 0 16px;
-    }
-    .history.assistant {
-      border-radius: 16px 16px 16px 0;
-      margin-right: 2rem;
-    }
-    img {
-      max-width: 100%;
-      max-height: 500px;
-      margin: 0 auto;
-    }
-    @media (max-width: 1000px) {
-      .history-outer {
-        padding: 0 1rem;
-      }
-      .history {
-        width: auto;
-        min-width: auto;
-        max-width: 100%;
-        margin: 0.5rem;
-      }
-    }
-    .inputs-outer {
-      width: 100vw;
-      max-width: 100vw;
-      height: 20vh;
-      max-height: 20vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .inputs-inner {
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 0.5rem;
-    }
-
-    textarea {
-      background-color: var(--chatbox-bg-color);
-      color: white;
-      border: 1px solid #474747; /* a slightly contrasting border color */
-      padding: 1rem;
-      border-radius: 5px;
-      min-height: calc(4rem + 12px);
-      max-height: calc(20vh - 2rem);
-      margin: 0 10px;
-      min-width: 800px;
-      max-width: 800px;
-      font-family: 'Arial', sans-serif;
-      font-size: 1rem;
-      resize: none;
-    }
-    button {
-      margin: 0 10px;
-      cursor: pointer;
-      background-color: var(--button-bg-color);
-      outline: none;
-      border: none;
-      padding: 0.25rem 1rem;
-    }
-    button:hover {
-      background-color: var(--button-bg-color-hover);
-    }
-    button:active {
-      background-color: var(--button-bg-color);
-    }
+    ${chatGptStyles}
   `;
   @query('textarea') textareaEl: HTMLTextAreaElement;
   @state() loading = false;
@@ -134,29 +40,45 @@ export class ChatGPT extends LitElement {
 
   async performPostRequest(endpoint: string, body: any): Promise<any> {
     this.loading = true;
+    let headers = {};
+    if (body instanceof FormData) {
+      headers = {
+        Accept: 'application/json',
+        'Content-Type': 'multipart/form-data'
+      };
+    } else {
+      headers = {
+        'Content-Type': 'application/json',
+        Accept: endpoint === '/' ? 'text/event-stream' : 'application/json'
+      };
+    }
     const response = await fetch(`http://localhost:8080${endpoint}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json', // TODO update to allow form data for image upload
-        Accept: endpoint === '/' ? 'text/event-stream' : 'application/json'
-      },
+      headers,
       body: JSON.stringify(body)
     });
     this.loading = false;
     return response;
   }
 
-  async submit(e: Event & { target: HTMLTextAreaElement }) {
-    if (!this.textareaEl.value) return;
+  async submit(e: Event) {
     const engine = document.querySelector<ChatNav>('chat-nav').engine;
-    if (!engine.includes('dall-e')) {
-      await this.runChatReq();
-    } else if (engine.includes('dall-e')) {
-      await this.runImageReq();
-    } else if (engine.includes('gpt-4-vision-preview')) {
-      await this.runVisionReq();
-    } else {
-      console.log('invalid engine');
+    switch (engine) {
+      case 'gpt-4-1106-preview':
+      case 'gpt-4':
+      case 'gpt-3.5-turbo':
+        await this.runChatReq();
+        break;
+      case 'dall-e-2':
+      case 'dall-e-3':
+        await this.runImageReq();
+        break;
+      case 'gpt-4-vision-preview':
+        await this.runVisionReq();
+        break;
+      default:
+        console.log('invalid engine');
+        break;
     }
   }
 
@@ -201,15 +123,14 @@ export class ChatGPT extends LitElement {
   }
 
   async runVisionReq() {
-    const engine = document.querySelector<ChatNav>('chat-nav').engine;
     const element = this.textareaEl;
     const prompt = element.value;
     element.value = '';
     // make a form submit to /vision
     const form = new FormData();
-    form.append('prompt', prompt);
-    form.append('engine', engine);
-    const response = await this.performPostRequest('http://localhost:8080/vision', form);
+    const file = this.shadowRoot.querySelector<HTMLInputElement>('input[type=file]').files[0];
+    form.append('file', new Blob([file], { type: file.type }));
+    const response = await this.performPostRequest('/vision', form);
   }
 
   writeToSessionStorage() {
@@ -252,67 +173,10 @@ export class ChatGPT extends LitElement {
     }
   }
 
-  get loadingIcon() {
-    if (!this.loading) return nothing;
-    return html`
-      <div style="min-height: 100px; min-width: 100px">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          xmlns:xlink="http://www.w3.org/1999/xlink"
-          style="margin: 0 auto; display:block;"
-          width="100px"
-          height="100px"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="xMidYMid">
-          <circle cx="50" cy="50" r="0" fill="none" stroke="#e90c59" stroke-width="2">
-            <animate
-              attributeName="r"
-              repeatCount="indefinite"
-              dur="1s"
-              values="0;40"
-              keyTimes="0;1"
-              keySplines="0 0.2 0.8 1"
-              calcMode="spline"
-              begin="0s"></animate>
-            <animate
-              attributeName="opacity"
-              repeatCount="indefinite"
-              dur="1s"
-              values="1;0"
-              keyTimes="0;1"
-              keySplines="0.2 0 0.8 1"
-              calcMode="spline"
-              begin="0s"></animate>
-          </circle>
-          <circle cx="50" cy="50" r="0" fill="none" stroke="#46dff0" stroke-width="2">
-            <animate
-              attributeName="r"
-              repeatCount="indefinite"
-              dur="1s"
-              values="0;40"
-              keyTimes="0;1"
-              keySplines="0 0.2 0.8 1"
-              calcMode="spline"
-              begin="-0.5s"></animate>
-            <animate
-              attributeName="opacity"
-              repeatCount="indefinite"
-              dur="1s"
-              values="1;0"
-              keyTimes="0;1"
-              keySplines="0.2 0 0.8 1"
-              calcMode="spline"
-              begin="-0.5s"></animate>
-          </circle>
-        </svg>
-      </div>
-    `;
-  }
-
   render() {
     return html`
       <div class="history-outer">
-        ${this.loadingIcon}
+        ${loadingIcon(this.loading)}
         ${[...this.history].reverse().map((item) => {
           const localContent = unsafeHTML(marked.parse(DOMPurify.sanitize(item.content)));
 
@@ -321,6 +185,20 @@ export class ChatGPT extends LitElement {
       </div>
       <div class="inputs-outer">
         <div class="inputs-inner">
+          <input
+            type="file"
+            accept="image/*"
+            style="display: none"
+            @change=${(e: Event & { target: HTMLInputElement }) => {
+              console.log('e', e.target.files);
+            }} />
+          <button
+            @click=${() => {
+              const input = this.shadowRoot.querySelector('input');
+              input.click();
+            }}>
+            Upload Image
+          </button>
           <textarea
             @keydown=${(e) => {
               if (e.key === 'Enter' && e.shiftKey) return;

@@ -304,10 +304,21 @@ func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	contentType := r.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "multipart/form-data") {
+		respondWithError(w, "Invalid Content-Type. Expected multipart/form-data", http.StatusBadRequest)
+		return
+	}
 
+	if err := r.ParseMultipartForm(32 << 20); err != nil { // 32 MB is the max memory used to parse the form
+		log.Println("Error parsing multipart form:", err)
+		respondWithError(w, "Error parsing multipart form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	// Read the file from the request
 	file, header, err := r.FormFile("file")
 	if err != nil {
+		log.Println("Error reading file from request:", err)
 		respondWithError(w, "Invalid file in request", http.StatusBadRequest)
 		return
 	}
@@ -315,12 +326,6 @@ func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
 
 	if header.Size == 0 {
 		respondWithError(w, "Empty file provided", http.StatusBadRequest)
-		return
-	}
-
-	contentType := header.Header.Get(contentTypeHeader)
-	if !strings.HasPrefix(contentType, "image/") {
-		respondWithError(w, "Invalid file type", http.StatusBadRequest)
 		return
 	}
 
@@ -347,7 +352,7 @@ func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
 				"content": []map[string]interface{}{
 					{
 						"type": "text",
-						"text": "What’s in this image?",
+						"text": "What is in this image?",
 					},
 					{
 						"type": "image_url",
@@ -434,11 +439,10 @@ func handleVertexRequest(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Handle preflight (CORS) request
+		w.Header().Set(accessControlAllow, "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		w.Header().Set(accessControlHeaders, "Accept, Content-Type")
 		if r.Method == http.MethodOptions {
-			w.Header().Set(accessControlAllow, "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-			w.Header().Set(accessControlHeaders, "Accept, Content-Type")
 			w.WriteHeader(http.StatusOK)
 			return
 		}

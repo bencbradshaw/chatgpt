@@ -84,6 +84,9 @@ export const chatGptStyles = css`
     font-family: 'Arial', sans-serif;
     font-size: 1rem;
   }
+  textarea:disabled {
+    cursor: not-allowed;
+  }
   .buttons {
     display: flex;
     flex-direction: column;

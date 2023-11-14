@@ -18,8 +18,8 @@ const renderer = {
   code(code, language) {
     const validLang = !!(language && hljs.getLanguage(language));
     const highlighted = validLang ? hljs.highlight(code, { language }).value : code;
-    const highlight2 = highlighted.replaceAll(/&lt;/g, '<').replaceAll(/&gt;/g, '>');
-    return `<pre><code class="hljs ${language}">${highlight2}</code></pre>`;
+    // const highlight2 = highlighted.replaceAll(/&lt;/g, '<').replaceAll(/&gt;/g, '>');
+    return `<pre><code class="hljs ${language}">${highlighted}</code></pre>`;
   }
 };
 marked.use({ renderer });
@@ -37,7 +37,8 @@ export class ChatGPT extends LitElement {
     custom?: string;
   }[] = sessionStorage.getItem('history') ? JSON.parse(sessionStorage.getItem('history')) : [];
   @state() miniPreviewImageURL = '';
-  @state() engine = sessionStorage.getItem('engine') ?? document.querySelector<ChatNav>('chat-nav').engine;
+  @state() engine =
+    sessionStorage.getItem('engine') ?? document.querySelector<ChatNav>('chat-nav').engine ?? 'gpt-4-1106-preview';
 
   async performPostRequest(endpoint: string, body: any): Promise<any> {
     this.loading = true;
@@ -295,6 +296,8 @@ export class ChatGPT extends LitElement {
       <div class="inputs-outer">
         <div class="inputs-inner">
           <textarea
+            ?disabled=${this.engine === 'gpt-4-vision-preview'}
+            title="Enter to send. Shift+Enter for new line."
             @keydown=${(e) => {
               if (e.key === 'Enter' && e.shiftKey) return;
 
@@ -308,7 +311,7 @@ export class ChatGPT extends LitElement {
             ${this.miniPreviewImageURL
               ? html` <div class="mini-preview"><img src="${this.miniPreviewImageURL}" /></div>`
               : nothing}
-            ${this.engine.includes('vision')
+            ${this.engine?.includes('vision')
               ? html`
                   <input
                     type="file"

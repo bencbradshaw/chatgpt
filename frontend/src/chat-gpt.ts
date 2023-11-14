@@ -38,6 +38,7 @@ export class ChatGPT extends LitElement {
   }[] = sessionStorage.getItem('history') ? JSON.parse(sessionStorage.getItem('history')) : [];
   @state() miniPreviewImageURL = '';
   @state() engine = sessionStorage.getItem('engine') ?? document.querySelector<ChatNav>('chat-nav').engine;
+
   async performPostRequest(endpoint: string, body: any): Promise<any> {
     this.loading = true;
     let headers = {};
@@ -124,6 +125,7 @@ export class ChatGPT extends LitElement {
         message = new TextDecoder().decode(value);
         this.updateAssistantResponse(nextIndex, message);
         this.loading = false;
+        this.shadowRoot.querySelector('.history-outer').scrollTop = 0;
       }
       this.writeToSessionStorage();
     } catch (err) {

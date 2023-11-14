@@ -32,7 +32,8 @@ export const chatGptStyles = css`
     margin-left: 2rem;
     border-radius: 16px 16px 0 16px;
   }
-  .history.assistant {
+  .history.assistant,
+  .history.bot {
     border-radius: 16px 16px 16px 0;
     margin-right: 2rem;
   }

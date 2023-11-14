@@ -1,4 +1,3 @@
-import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
@@ -15,6 +14,12 @@ const renderer = {
         <img src="${href}" alt="${text}" title="${title}" />
       </div>
     `;
+  },
+  code(code, language) {
+    const validLang = !!(language && hljs.getLanguage(language));
+    const highlighted = validLang ? hljs.highlight(code, { language }).value : code;
+    const highlight2 = highlighted.replaceAll(/&lt;/g, '<').replaceAll(/&gt;/g, '>');
+    return `<pre><code class="hljs ${language}">${highlight2}</code></pre>`;
   }
 };
 marked.use({ renderer });
@@ -31,20 +36,12 @@ export class ChatGPT extends LitElement {
     content: string;
   }[] = sessionStorage.getItem('history') ? JSON.parse(sessionStorage.getItem('history')) : [];
 
-  async updated() {
-    const codeEls = this.shadowRoot.querySelectorAll<HTMLElement>('code:not([data-highlighted])');
-    codeEls.forEach((block: HTMLElement) => {
-      hljs.highlightElement(block);
-    });
-  }
-
   async performPostRequest(endpoint: string, body: any): Promise<any> {
     this.loading = true;
     let headers = {};
     if (body instanceof FormData) {
       headers = {
-        Accept: 'application/json',
-        'Content-Type': 'multipart/form-data'
+        Accept: 'application/json'
       };
     } else {
       headers = {
@@ -55,7 +52,7 @@ export class ChatGPT extends LitElement {
     const response = await fetch(`http://localhost:8080${endpoint}`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(body)
+      body: body instanceof FormData ? body : JSON.stringify(body)
     });
     this.loading = false;
     return response;
@@ -106,20 +103,25 @@ export class ChatGPT extends LitElement {
           }),
       engine: engine
     };
+    try {
+      const response = await this.performPostRequest('/', reqBody);
 
-    const response = await this.performPostRequest('/', reqBody);
-    const reader = response.body.getReader();
-    let message = '';
-    const nextIndex = this.history.length;
-    this.addToHistory('assistant', '');
+      const reader = response.body.getReader();
+      let message = '';
+      const nextIndex = this.history.length;
+      this.addToHistory('assistant', '');
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      message = new TextDecoder().decode(value);
-      this.updateAssistantResponse(nextIndex, message);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        message = new TextDecoder().decode(value);
+        this.updateAssistantResponse(nextIndex, message);
+      }
+      this.writeToSessionStorage();
+    } catch (err) {
+      this.addToHistory('assistant', 'http error. try again');
+      this.loading = false;
     }
-    this.writeToSessionStorage();
   }
 
   async runVisionReq() {
@@ -127,10 +129,21 @@ export class ChatGPT extends LitElement {
     const prompt = element.value;
     element.value = '';
     // make a form submit to /vision
-    const form = new FormData();
-    const file = this.shadowRoot.querySelector<HTMLInputElement>('input[type=file]').files[0];
-    form.append('file', new Blob([file], { type: file.type }));
-    const response = await this.performPostRequest('/vision', form);
+    try {
+      const form = new FormData();
+      const file = this.shadowRoot.querySelector<HTMLInputElement>('input[type=file]').files[0];
+      form.append('file', new Blob([file], { type: file.type }));
+      this.addToHistory('user', `![image](${URL.createObjectURL(file)})`);
+      const response = await this.performPostRequest('/vision', form);
+      if (response.status !== 200) {
+        throw new Error('http error. try again');
+      }
+      this.addToHistory('assistant', (await response.json()).content);
+    } catch (err) {
+      this.addToHistory('assistant', 'http error. try again');
+    } finally {
+      this.loading = false;
+    }
   }
 
   writeToSessionStorage() {
@@ -154,11 +167,16 @@ export class ChatGPT extends LitElement {
       n: 1,
       size: '1024x1024'
     };
-
-    const response = await this.performPostRequest('/image', requestBody);
-    const imgResp = (await response.json()) as { url: string };
-    const imgMarkdown = `![image](${imgResp.url})`;
-    this.addToHistory('assistant', imgMarkdown);
+    try {
+      const response = await this.performPostRequest('/image', requestBody);
+      const imgResp = (await response.json()) as { url: string };
+      const imgMarkdown = `![image](${imgResp.url})`;
+      this.addToHistory('assistant', imgMarkdown);
+    } catch (err) {
+      this.addToHistory('assistant', 'http error. try again');
+    } finally {
+      this.loading = false;
+    }
   }
 
   addToHistory(role: 'user' | 'assistant', content: string) {
@@ -177,11 +195,9 @@ export class ChatGPT extends LitElement {
     return html`
       <div class="history-outer">
         ${loadingIcon(this.loading)}
-        ${[...this.history].reverse().map((item) => {
-          const localContent = unsafeHTML(marked.parse(DOMPurify.sanitize(item.content)));
-
-          return html` <p class="history ${item.role}">${localContent}</p> `;
-        })}
+        ${[...this.history]
+          .reverse()
+          .map((item) => html` <p class="history ${item.role}">${unsafeHTML(marked.parse(item.content))}</p> `)}
       </div>
       <div class="inputs-outer">
         <div class="inputs-inner">

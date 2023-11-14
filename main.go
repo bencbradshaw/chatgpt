@@ -300,21 +300,36 @@ func respondWithJSON(w http.ResponseWriter, payload interface{}) {
 
 func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling vision request")
+	w.Header().Set(contentTypeHeader, "application/json")
+	r.ParseMultipartForm(100)
+	for key, value := range r.Form {
+		log.Println(key, value)
+	}
+
+	// Temporary: Read and log the raw request body
+	_, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println("Error reading request body:", err)
+		respondWithError(w, "Could not read request body", http.StatusInternalServerError)
+		return
+	}
 	if r.Method != http.MethodPost {
 		respondWithError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	// Set the Content-Type header with the boundary parameter
+	r.Header.Set("Content-Type", "multipart/form-data; boundary=boundary-string")
+
 	contentType := r.Header.Get("Content-Type")
 	if !strings.HasPrefix(contentType, "multipart/form-data") {
 		respondWithError(w, "Invalid Content-Type. Expected multipart/form-data", http.StatusBadRequest)
 		return
 	}
 
-	if err := r.ParseMultipartForm(32 << 20); err != nil { // 32 MB is the max memory used to parse the form
-		log.Println("Error parsing multipart form:", err)
-		respondWithError(w, "Error parsing multipart form: "+err.Error(), http.StatusBadRequest)
-		return
-	}
+	// if err := r.ParseMultipartForm(32 << 20); err != nil { // 32 MB is the max memory used to parse the form
+	// 	respondWithError(w, "Error parsing multipart form: "+err.Error(), http.StatusBadRequest)
+	// 	return
+	// }
 	// Read the file from the request
 	file, header, err := r.FormFile("file")
 	if err != nil {
@@ -323,6 +338,10 @@ func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+
+	log.Printf("Uploaded File: %+v\n", header.Filename)
+	log.Printf("File Size: %+v\n", header.Size)
+	log.Printf("MIME Header: %+v\n", header.Header)
 
 	if header.Size == 0 {
 		respondWithError(w, "Empty file provided", http.StatusBadRequest)
@@ -391,7 +410,7 @@ func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, apiResponse)
+	respondWithJSON(w, map[string]interface{}{"content": apiResponse.Choices[0].Message.Content})
 }
 
 func handleVertexRequest(w http.ResponseWriter, r *http.Request) {

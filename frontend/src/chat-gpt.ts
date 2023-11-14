@@ -1,5 +1,5 @@
 import hljs from 'highlight.js';
-import { css, html, LitElement } from 'lit';
+import { css, html, LitElement, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked } from 'marked';
@@ -34,8 +34,10 @@ export class ChatGPT extends LitElement {
   @state() history: {
     role: 'user' | 'assistant';
     content: string;
+    custom?: string;
   }[] = sessionStorage.getItem('history') ? JSON.parse(sessionStorage.getItem('history')) : [];
-
+  @state() miniPreviewImageURL = '';
+  @state() engine = sessionStorage.getItem('engine') ?? document.querySelector<ChatNav>('chat-nav').engine;
   async performPostRequest(endpoint: string, body: any): Promise<any> {
     this.loading = true;
     let headers = {};
@@ -54,7 +56,6 @@ export class ChatGPT extends LitElement {
       headers,
       body: body instanceof FormData ? body : JSON.stringify(body)
     });
-    this.loading = false;
     return response;
   }
 
@@ -72,6 +73,12 @@ export class ChatGPT extends LitElement {
         break;
       case 'gpt-4-vision-preview':
         await this.runVisionReq();
+        break;
+      case 'tts-1':
+        await this.runTtsReq();
+        break;
+      case 'vertex':
+        await this.runVertexReq();
         break;
       default:
         console.log('invalid engine');
@@ -116,10 +123,52 @@ export class ChatGPT extends LitElement {
         if (done) break;
         message = new TextDecoder().decode(value);
         this.updateAssistantResponse(nextIndex, message);
+        this.loading = false;
       }
       this.writeToSessionStorage();
     } catch (err) {
       this.addToHistory('assistant', 'http error. try again');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async runVertexReq() {
+    const engine = document.querySelector<ChatNav>('chat-nav').engine;
+    const element = this.textareaEl;
+    const prompt = element.value;
+    element.value = '';
+    const includeContext = document.querySelector<ChatNav>('chat-nav').includeContext;
+    this.addToHistory('user', prompt);
+
+    const requestBody = {
+      ...(includeContext
+        ? {
+            messages: [
+              ...this.history.map((item) => ({
+                role: item.role === 'assistant' ? 'bot' : 'user',
+                content: item.content
+              }))
+            ]
+          }
+        : {
+            messages: [{ role: 'user', content: prompt }]
+          })
+    };
+
+    try {
+      const response = await this.performPostRequest('/vertex', requestBody);
+      const json = await response.json();
+      console.log('json', json);
+      if (!json.content) {
+        throw new Error('No content in response');
+      }
+      // Assuming `json.content` is the part of the response you want to display
+      this.addToHistory('assistant', json.content);
+    } catch (err: any) {
+      console.error(err);
+      this.addToHistory('assistant', `Vertex AI error: ${err.message}. Try again.`);
+    } finally {
       this.loading = false;
     }
   }
@@ -128,19 +177,23 @@ export class ChatGPT extends LitElement {
     const element = this.textareaEl;
     const prompt = element.value;
     element.value = '';
-    // make a form submit to /vision
+    this.miniPreviewImageURL = '';
     try {
       const form = new FormData();
       const file = this.shadowRoot.querySelector<HTMLInputElement>('input[type=file]').files[0];
-      form.append('file', new Blob([file], { type: file.type }));
+      form.append('file', file);
       this.addToHistory('user', `![image](${URL.createObjectURL(file)})`);
       const response = await this.performPostRequest('/vision', form);
       if (response.status !== 200) {
         throw new Error('http error. try again');
       }
-      this.addToHistory('assistant', (await response.json()).content);
+      const json = await response.json();
+      if (!json.content) {
+        throw new Error('no content in response');
+      }
+      this.addToHistory('assistant', json.content);
     } catch (err) {
-      this.addToHistory('assistant', 'http error. try again');
+      this.addToHistory('assistant', `http error.${err} try again`);
     } finally {
       this.loading = false;
     }
@@ -179,8 +232,40 @@ export class ChatGPT extends LitElement {
     }
   }
 
-  addToHistory(role: 'user' | 'assistant', content: string) {
-    this.history = [...this.history, { role, content }];
+  async runTtsReq() {
+    const element = this.textareaEl;
+    const prompt = element.value;
+    element.value = '';
+    this.addToHistory('user', prompt);
+    const requestBody = {
+      model: 'tts-1',
+      input: prompt,
+      voice: 'alloy'
+    };
+
+    try {
+      const response = await this.performPostRequest('/tts', requestBody);
+      if (response.ok) {
+        const blob = await response.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        this.addToHistory(
+          'assistant',
+          `Audio response received. Click to play.`,
+          `<audio controls src="${audioUrl}"></audio>`
+        );
+      } else {
+        throw new Error('Non-OK response from TTS endpoint');
+      }
+    } catch (err) {
+      this.addToHistory('assistant', 'TTS error. Try again.');
+    } finally {
+      this.loading = false;
+      console.log('loading false');
+    }
+  }
+
+  addToHistory(role: 'user' | 'assistant', content: string, custom?: string) {
+    this.history = [...this.history, { role, content, ...(custom ? { custom: custom } : {}) }];
     this.writeToSessionStorage();
   }
 
@@ -197,24 +282,16 @@ export class ChatGPT extends LitElement {
         ${loadingIcon(this.loading)}
         ${[...this.history]
           .reverse()
-          .map((item) => html` <p class="history ${item.role}">${unsafeHTML(marked.parse(item.content))}</p> `)}
+          .map(
+            (item) => html`
+              <p class="history ${item.role}">
+                ${unsafeHTML(marked.parse(item.content))} ${item.custom ? unsafeHTML(item.custom as string) : nothing}
+              </p>
+            `
+          )}
       </div>
       <div class="inputs-outer">
         <div class="inputs-inner">
-          <input
-            type="file"
-            accept="image/*"
-            style="display: none"
-            @change=${(e: Event & { target: HTMLInputElement }) => {
-              console.log('e', e.target.files);
-            }} />
-          <button
-            @click=${() => {
-              const input = this.shadowRoot.querySelector('input');
-              input.click();
-            }}>
-            Upload Image
-          </button>
           <textarea
             @keydown=${(e) => {
               if (e.key === 'Enter' && e.shiftKey) return;
@@ -225,7 +302,31 @@ export class ChatGPT extends LitElement {
                 return;
               }
             }}></textarea>
-          <button @click=${this.submit}>Send</button>
+          <div class="buttons">
+            ${this.miniPreviewImageURL
+              ? html` <div class="mini-preview"><img src="${this.miniPreviewImageURL}" /></div>`
+              : nothing}
+            ${this.engine.includes('vision')
+              ? html`
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style="display: none"
+                    @change=${(e: Event & { target: HTMLInputElement }) => {
+                      console.log('e', e.target.files);
+                      this.miniPreviewImageURL = URL.createObjectURL(e.target.files[0]);
+                    }} />
+                  <button
+                    @click=${() => {
+                      const input = this.shadowRoot.querySelector('input');
+                      input.click();
+                    }}>
+                    Upload Image
+                  </button>
+                `
+              : nothing}
+            <button @click=${this.submit}>Send</button>
+          </div>
         </div>
       </div>
     `;

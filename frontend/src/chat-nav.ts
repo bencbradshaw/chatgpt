@@ -24,29 +24,30 @@ export class ChatNav extends LitElement {
       }
     `;
   }
-  @property({ type: String }) engine = 'gpt-4-1106-preview';
-  @property({ type: Boolean }) includeContext = true;
+  @property({ type: String }) engine = sessionStorage.getItem('engine') ?? 'gpt-4-1106-preview';
+  @property({ type: Boolean }) includeContext = JSON.parse(sessionStorage.getItem('include_context')) ?? true;
   @property({ type: String })
-  systemMessage = `Your name is ChatGPT. You help with coding. 
-  You use industry best practices for all the code you write. 
-  You assume your users are profressors and do not need extra 
-  information apart from the code you give them. You do not add
-  comments to your code since you naming conventions are so clear.`;
+  systemMessage = sessionStorage.getItem('system_message') ?? `Your name is ChatGPT. You are a helpful assistant.`;
   render() {
     return html`
       <nav>
         <div>
           <select
             id="engine"
+            .value=${this.engine}
             @change=${(e) => {
               this.engine = e.target.value;
+              sessionStorage.setItem('engine', this.engine);
+              document.querySelector('chat-gpt').engine = this.engine;
             }}>
-            <option value="gpt-4-1106-preview" selected>GPT 4 Turbo</option>
+            <option value="gpt-4-1106-preview">GPT 4 Turbo</option>
             <option value="gpt-4">GPT 4</option>
             <option value="gpt-4-vision-preview">GPT 4 Vision</option>
             <option value="gpt-3.5-turbo">GPT 3.5 Turbo</option>
             <option value="dall-e-3">DALL-E 3</option>
             <option value="dall-e-2">DALL-E 2</option>
+            <option value="tts-1">TTS 1</option>
+            <option value="vertex">Vertex Code Bison</option>
           </select>
 
           <input
@@ -56,6 +57,7 @@ export class ChatNav extends LitElement {
             style="width: 300px;"
             @input=${(e) => {
               this.systemMessage = e.target.value;
+              sessionStorage.setItem('system_message', this.systemMessage);
             }} />
           <input
             type="checkbox"
@@ -63,12 +65,13 @@ export class ChatNav extends LitElement {
             .checked=${this.includeContext}
             @change=${(e) => {
               this.includeContext = e.target.checked;
+              sessionStorage.setItem('include_context', this.includeContext);
             }} />
           <span>Include History</span>
 
           <button
             @click=${(e) => {
-              sessionStorage.clear();
+              sessionStorage.removeItem('history');
               location.reload();
             }}>
             Clear History

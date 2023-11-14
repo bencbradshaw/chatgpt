@@ -270,34 +270,6 @@ func respondWithJSON(w http.ResponseWriter, payload interface{}) {
 	w.Write(response)
 }
 
-// create another function to handle vision request
-// it will accept a file, and encode it into base 64
-// then it will post this body
-//
-//	payload = {
-//	    "model": "gpt-4-vision-preview",
-//	    "messages": [
-//	      {
-//	        "role": "user",
-//	        "content": [
-//	          {
-//	            "type": "text",
-//	            "text": "What’s in this image?"
-//	          },
-//	          {
-//	            "type": "image_url",
-//	            "image_url": {
-//	              "url": f"data:image/jpeg;base64,{base64_image}"
-//	            }
-//	          }
-//	        ]
-//	      }
-//	    ],
-//	    "max_tokens": 300
-//	}
-//
-// to the same endpoint as the chat request
-
 func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling vision request")
 	w.Header().Set(contentTypeHeader, "application/json")
@@ -413,6 +385,22 @@ func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, map[string]interface{}{"content": apiResponse.Choices[0].Message.Content})
 }
 
+type VertexMessage struct {
+	Author  string `json:"author"`
+	Content string `json:"content"`
+}
+
+type ChatRequestML struct {
+	Instances []struct {
+		Messages []Message `json:"messages"`
+	} `json:"instances"`
+	Parameters struct {
+		CandidateCount  int     `json:"candidateCount"`
+		MaxOutputTokens int     `json:"maxOutputTokens"`
+		Temperature     float64 `json:"temperature"`
+	} `json:"parameters"`
+}
+
 func handleVertexRequest(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling Google Vertex AI request")
 	if r.Method != http.MethodPost {
@@ -435,29 +423,132 @@ func handleVertexRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	tokenSource := creds.TokenSource
 
-	var requestBody map[string]interface{}
+	var requestBody struct {
+		Messages []VertexMessage `json:"messages"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		respondWithError(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	resp, err := doPostRequest(vertexEndpoint, requestBody, tokenSource)
+	messages := make([]Message, len(requestBody.Messages))
+	for i, vMsg := range requestBody.Messages {
+		messages[i] = Message{Role: vMsg.Author, Content: vMsg.Content} // Make sure Role matches the expected value for Vertex AI
+	}
+
+	chatReqBody := ChatRequestML{
+		Instances: []struct {
+			Messages []Message `json:"messages"`
+		}{
+			{
+				Messages: messages, // Use the converted messages here
+			},
+		},
+		Parameters: struct {
+			CandidateCount  int     `json:"candidateCount"`
+			MaxOutputTokens int     `json:"maxOutputTokens"`
+			Temperature     float64 `json:"temperature"`
+		}{
+			CandidateCount:  1,
+			MaxOutputTokens: 128, // Adjust as necessary
+			Temperature:     0.5, // Adjust as necessary
+		},
+	}
+
+	resp, err := doPostRequest(vertexEndpoint, chatReqBody, tokenSource)
 	if err != nil {
 		respondWithError(w, "Error making a request to Google Vertex AI API: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
 
-	// Copy the response from the Vertex AI API to the client
-	w.Header().Set(contentTypeHeader, contentTypeJSON)
-	w.WriteHeader(resp.StatusCode)
-	if _, err := io.Copy(w, resp.Body); err != nil {
-		log.Println("Error copying Vertex AI API response to client:", err)
+	if resp.StatusCode != http.StatusOK {
+		var apiError map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&apiError); err == nil {
+			respondWithJSON(w, apiError)
+		} else {
+			respondWithError(w, "Error with OpenAI API", http.StatusInternalServerError)
+		}
+		return
 	}
+
+	var apiResponse struct {
+		Predictions []struct {
+			Candidates []struct {
+				Content string `json:"content"`
+			} `json:"candidates"`
+		} `json:"predictions"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		respondWithError(w, "Error decoding Vertex AI response: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if len(apiResponse.Predictions) == 0 || len(apiResponse.Predictions[0].Candidates) == 0 {
+		respondWithError(w, "No predictions found in Vertex AI response", http.StatusInternalServerError)
+		return
+	}
+
+	content := apiResponse.Predictions[0].Candidates[0].Content
+
+	respondWithJSON(w, map[string]interface{}{
+		"content": content,
+	})
 }
 
+type TtsRequest struct {
+	Model string `json:"model"`
+	Input string `json:"input"`
+	Voice string `json:"voice"`
+}
+
+func handleTtsRequest(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling TTS (Text-to-Speech) request")
+	defer r.Body.Close()
+
+	if r.Method != http.MethodPost {
+		respondWithError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var ttsReq TtsRequest
+	if err := json.NewDecoder(r.Body).Decode(&ttsReq); err != nil {
+		respondWithError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Prepare the payload for OpenAI API
+	ttsPayload := map[string]string{
+		"model": ttsReq.Model,
+		"input": ttsReq.Input,
+		"voice": ttsReq.Voice,
+	}
+
+	// Get the OpenAI secret key from environment variable
+	authToken := os.Getenv(envOpenAiSk)
+
+	// Make the POST request to OpenAI's Text-to-Speech endpoint
+	openAiTtsEndpoint := openAiBaseUrl + "/audio/speech"
+	resp, err := doPostRequest(openAiTtsEndpoint, ttsPayload, authToken)
+	if err != nil {
+		respondWithError(w, "Error making request to OpenAI TTS API: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Stream the resulting audio back to the client
+	w.Header().Set(contentTypeHeader, "audio/mpeg")
+	w.WriteHeader(resp.StatusCode)
+	if _, err := io.Copy(w, resp.Body); err != nil {
+		log.Println("Error streaming TTS audio response to client:", err)
+	}
+}
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Handling request:", r.URL.Path)
+		log.Println("Request method:", r.Method)
+		log.Println("Request Content-Type:", r.Header.Get("Content-Type"))
 		w.Header().Set(accessControlAllow, "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 		w.Header().Set(accessControlHeaders, "Accept, Content-Type")
@@ -474,9 +565,12 @@ func main() {
 			handleVisionRequest(w, r)
 		case "/vertex":
 			handleVertexRequest(w, r)
+		case "/tts":
+			handleTtsRequest(w, r)
 		default:
 			http.NotFound(w, r)
 		}
+		log.Println("Response end")
 	})
 
 	log.Println("Starting server on port 8080")

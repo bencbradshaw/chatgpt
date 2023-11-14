@@ -46,9 +46,9 @@ export const chatGptStyles = css`
       padding: 0 1rem;
     }
     .history {
-      width: auto;
-      min-width: auto;
-      max-width: 100%;
+      width: calc(100% - 7rem);
+      min-width: unset;
+      max-width: unset;
       margin: 0.5rem;
     }
   }
@@ -82,15 +82,32 @@ export const chatGptStyles = css`
     max-width: 800px;
     font-family: 'Arial', sans-serif;
     font-size: 1rem;
-    resize: none;
+  }
+  .buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  .mini-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mini-preview img {
+    height: 25px;
+    max-width: 100%;
+    margin: 0px;
+    border-radius: 5px;
+    overflow: hidden;
   }
   button {
-    margin: 0 10px;
+    margin: 10px;
     cursor: pointer;
     background-color: var(--button-bg-color);
     outline: none;
     border: none;
     padding: 0.25rem 1rem;
+    width: 115px;
   }
   button:hover {
     background-color: var(--button-bg-color-hover);

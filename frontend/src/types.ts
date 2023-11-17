@@ -1,5 +1,5 @@
 export interface ChatHistoryItem {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'bot';
   content: string;
   custom?: string;
 }

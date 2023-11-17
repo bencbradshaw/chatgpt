@@ -8,6 +8,7 @@ import { ChatNav } from './chat-nav.js';
 import { githubDarkDimmed } from './github-dark-dimmed.css.js';
 import { loadingIcon } from './loading-icon.js';
 import { store } from './store.js';
+import { ChatHistory } from './types.js';
 const renderer = {
   image(href = '', title = 'image', text = 'image') {
     return `
@@ -46,15 +47,17 @@ export class ChatGPT extends LitElement {
   `;
   @query('textarea') textareaEl: HTMLTextAreaElement;
   @state() loading = false;
-  @state() history: {
-    role: 'user' | 'assistant';
-    content: string;
-    custom?: string;
-  }[] = sessionStorage.getItem('history') ? JSON.parse(sessionStorage.getItem('history')) : [];
+  @state() history: ChatHistory = [];
   @state() miniPreviewImageURL = '';
   @state() engine =
     sessionStorage.getItem('engine') ?? document.querySelector<ChatNav>('chat-nav').engine ?? 'gpt-4-1106-preview';
-
+  connectedCallback() {
+    super.connectedCallback();
+    store.subscribe<ChatHistory>('history', (history) => {
+      this.history = history;
+      console.log('history sub', history);
+    });
+  }
   async performPostRequest(endpoint: string, body: any): Promise<any> {
     this.loading = true;
     let headers = {};
@@ -283,16 +286,11 @@ export class ChatGPT extends LitElement {
 
   addToHistory(role: 'user' | 'assistant', content: string, custom?: string) {
     const newChat = { role, content, ...(custom ? { custom: custom } : {}) };
-    this.history = [...this.history, newChat];
-    this.writeToSessionStorage();
     store.addMessage(newChat);
   }
 
   updateAssistantResponse(index: number, newContent: string) {
-    if (this.history[index]) {
-      this.history[index].content += newContent;
-      this.history = [...this.history];
-    }
+    store.addToMessageContent(newContent, index);
   }
   deleteItem(item) {
     this.history = this.history.filter((i) => i !== item);

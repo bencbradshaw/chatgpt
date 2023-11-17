@@ -10,13 +10,22 @@ export class ChatThreads extends LitElement {
       left: 0;
       top: 0;
       bottom: 0;
+      border-right: 1px solid white;
+      padding: 0 0.5rem;
     }
     .section {
       display: flex;
       flex-direction: column;
     }
     .thread {
+      box-sizing: border-box;
       color: white;
+      border: 1px solid transparent;
+      margin: 1rem 0;
+    }
+    .thread:hover {
+      border: 1px solid white;
+      cursor: pointer;
     }
   `;
   @property({ type: Array }) threads: ChatHistory[] = [];
@@ -37,13 +46,13 @@ export class ChatThreads extends LitElement {
   render() {
     return html`
       <section>
-        <p>threads</p>
         ${this.threads.map(
           (thread, i) =>
             html`
               <div class="thread" @click=${() => store.selectHistory(i)}>${thread[0].content.slice(0, 10) + '...'}</div>
             `
         )}
+        <div class="thread" @click=${() => store.createNewThread()}>+ new thread</div>
       </section>
     `;
   }

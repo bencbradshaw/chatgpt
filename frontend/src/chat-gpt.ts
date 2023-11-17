@@ -68,7 +68,7 @@ export class ChatGPT extends LitElement {
         Accept: endpoint === '/' ? 'text/event-stream' : 'application/json'
       };
     }
-    const response = await fetch(`http://localhost:8080${endpoint}`, {
+    const response = await fetch(`http://localhost:8081${endpoint}`, {
       method: 'POST',
       headers,
       body: body instanceof FormData ? body : JSON.stringify(body)

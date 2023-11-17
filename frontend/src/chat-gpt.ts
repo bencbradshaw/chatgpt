@@ -55,7 +55,7 @@ export class ChatGPT extends LitElement {
     super.connectedCallback();
     store.subscribe<ChatHistory>('history', (history) => {
       this.history = history;
-      console.log('history sub', history);
+      console.log('history sub');
     });
   }
   async performPostRequest(endpoint: string, body: any): Promise<any> {

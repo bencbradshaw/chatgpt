@@ -15,9 +15,26 @@ class Store extends EventTarget {
     console.log('store init', Math.random());
   }
 
+  calculateLocalStorageSize(): number {
+    let totalSize = 0;
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) {
+        const value = localStorage.getItem(key) || '';
+        // Each character is 16 bits (2 bytes) in UTF-16, and size in kilobytes (KB)
+        totalSize += (key.length + value.length) * 2;
+      }
+    }
+
+    // Convert from Bytes to Kilobytes (KB)
+    return totalSize / 1024;
+  }
+
   #writeToLocalStorage() {
     localStorage.setItem('threads', JSON.stringify(this.threads));
     localStorage.setItem('activeHistoryIndex', this.activeHistoryIndex.toString());
+    console.log(this.calculateLocalStorageSize().toFixed(2) + ' KB');
   }
 
   #emit() {
@@ -50,12 +67,14 @@ class Store extends EventTarget {
       this.threads[index] = [];
     }
     this.history = this.threads[index];
+    this.threads = [...this.threads];
     this.activeHistoryIndex = index;
     this.#writeToLocalStorage();
     this.#emit();
   }
   createNewThread() {
     this.threads.push([]);
+    this.threads = [...this.threads]; // create a new ref
     this.selectHistory(this.threads.length - 1);
     this.#emit();
   }
@@ -67,7 +86,6 @@ class Store extends EventTarget {
   deleteItem(chatItemId: number, threadId = this.activeHistoryIndex) {}
   subscribe<T>(key: string, cb: (value: T) => void) {
     const value = this[key] as T;
-    console.log(value);
     cb(value);
     const eventListener = (event: Event) => {
       const value: T = this[key];

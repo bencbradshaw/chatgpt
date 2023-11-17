@@ -22,6 +22,10 @@ export class ChatThreads extends LitElement {
       color: white;
       border: 1px solid transparent;
       margin: 1rem 0;
+      padding: 0.25rem;
+    }
+    .active {
+      border: 1px solid #939393;
     }
     .thread:hover {
       border: 1px solid white;
@@ -29,29 +33,35 @@ export class ChatThreads extends LitElement {
     }
   `;
   @property({ type: Array }) threads: ChatHistory[] = [];
-  subscription: { unsubscribe: () => void };
+  @property({ type: Number }) activeHistoryIndex: number = 0;
+  sub1: { unsubscribe: () => void };
+  sub2: { unsubscribe: () => void };
   connectedCallback() {
     super.connectedCallback();
-    this.subscription = store.subscribe<ChatHistory[]>('threads', (threads) => {
+    this.sub1 = store.subscribe<ChatHistory[]>('threads', (threads) => {
       this.threads = threads;
-      console.log('threads', threads);
+    });
+    this.sub2 = store.subscribe<number>('activeHistoryIndex', (idx) => {
+      this.activeHistoryIndex = idx;
     });
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.subscription.unsubscribe();
+    this.sub1.unsubscribe();
+    this.sub2.unsubscribe();
   }
 
   render() {
     return html`
       <section>
-        ${this.threads.map(
-          (thread, i) =>
-            html`
-              <div class="thread" @click=${() => store.selectHistory(i)}>${thread[0].content.slice(0, 10) + '...'}</div>
-            `
-        )}
+        ${this.threads.map((thread, i) => {
+          return html`
+            <div class="thread ${this.activeHistoryIndex === i ? 'active' : ''}" @click=${() => store.selectHistory(i)}>
+              ${(thread?.length ? thread : [])[0]?.content?.slice(0, 10) + '...' || 'empty thread'}
+            </div>
+          `;
+        })}
         <div class="thread" @click=${() => store.createNewThread()}>+ new thread</div>
       </section>
     `;

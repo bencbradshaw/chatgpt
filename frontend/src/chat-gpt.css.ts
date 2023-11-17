@@ -27,6 +27,7 @@ export const chatGptStyles = css`
     padding: 1rem 2rem;
     box-shadow: rgb(255 255 255) 0px 0px 14px 0px;
     background-color: var(--primary-bg-color);
+    position: relative;
   }
   .history.user {
     margin-left: 2rem;
@@ -129,6 +130,20 @@ export const chatGptStyles = css`
     margin: 0;
     padding: 0;
     width: auto;
+  }
+  button.delete {
+    background-color: #424040;
+    margin: 0;
+    padding: 0 0 4px 0;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 16px;
+    height: 16px;
+    border-radius: 25%;
+  }
+  button.delete:hover {
+    background-color: #a01f1f;
   }
   pre {
     margin-top: 0;

@@ -151,7 +151,6 @@ export class ChatGPT extends LitElement {
   }
 
   async runVertexReq() {
-    const engine = document.querySelector<ChatNav>('chat-nav').engine;
     const element = this.textareaEl;
     const prompt = element.value;
     element.value = '';
@@ -292,20 +291,22 @@ export class ChatGPT extends LitElement {
       this.history = [...this.history];
     }
   }
-
+  deleteItem(item) {
+    this.history = this.history.filter((i) => i !== item);
+    this.writeToSessionStorage();
+  }
   render() {
     return html`
       <div class="history-outer">
         ${loadingIcon(this.loading)}
-        ${[...this.history]
-          .reverse()
-          .map(
-            (item) => html`
-              <p class="history ${item.role}">
-                ${unsafeHTML(marked.parse(item.content))} ${item.custom ? unsafeHTML(item.custom as string) : nothing}
-              </p>
-            `
-          )}
+        ${[...this.history].reverse().map(
+          (item) => html`
+            <p class="history ${item.role}">
+              <button class="delete" @click=${(e) => this.deleteItem(item)}>x</button>
+              ${unsafeHTML(marked.parse(item.content))} ${item.custom ? unsafeHTML(item.custom as string) : nothing}
+            </p>
+          `
+        )}
       </div>
       <div class="inputs-outer">
         <div class="inputs-inner">
@@ -314,7 +315,6 @@ export class ChatGPT extends LitElement {
             title="Enter to send. Shift+Enter for new line."
             @keydown=${(e) => {
               if (e.key === 'Enter' && e.shiftKey) return;
-
               if (e.key === 'Enter') {
                 e.preventDefault();
                 this.submit(e);

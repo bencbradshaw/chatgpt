@@ -119,4 +119,18 @@ export const chatGptStyles = css`
   button:active {
     background-color: var(--button-bg-color);
   }
+  .button-copy-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    transform: translateY(16px);
+  }
+  button.copy {
+    margin: 0;
+    padding: 0;
+    width: auto;
+  }
+  pre {
+    margin-top: 0;
+  }
 `;

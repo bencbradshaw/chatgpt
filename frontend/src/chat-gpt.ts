@@ -19,7 +19,21 @@ const renderer = {
     const validLang = !!(language && hljs.getLanguage(language));
     const highlighted = validLang ? hljs.highlight(code, { language }).value : code;
     // const highlight2 = highlighted.replaceAll(/&lt;/g, '<').replaceAll(/&gt;/g, '>');
-    return `<pre><code class="hljs ${language}">${highlighted}</code></pre>`;
+    return `
+    <div class="button-copy-container">
+      <button class="copy" 
+        onclick="(function() { 
+          const codeBlock = this.parentElement.nextElementSibling.querySelector('code'); 
+          const codeText = codeBlock.textContent; 
+          navigator.clipboard.writeText(codeText); 
+          this.textContent = 'Copied'; 
+          setTimeout(() => { this.textContent = 'Copy'; }, 3000); 
+        }).call(this)">
+        Copy
+      </button>
+      </div>
+    <pre><code class="hljs ${language}">${highlighted}</code></pre>
+    `;
   }
 };
 marked.use({ renderer });

@@ -7,6 +7,7 @@ import { chatGptStyles } from './chat-gpt.css.js';
 import { ChatNav } from './chat-nav.js';
 import { githubDarkDimmed } from './github-dark-dimmed.css.js';
 import { loadingIcon } from './loading-icon.js';
+import { store } from './store.js';
 const renderer = {
   image(href = '', title = 'image', text = 'image') {
     return `
@@ -281,8 +282,10 @@ export class ChatGPT extends LitElement {
   }
 
   addToHistory(role: 'user' | 'assistant', content: string, custom?: string) {
-    this.history = [...this.history, { role, content, ...(custom ? { custom: custom } : {}) }];
+    const newChat = { role, content, ...(custom ? { custom: custom } : {}) };
+    this.history = [...this.history, newChat];
     this.writeToSessionStorage();
+    store.addMessage(newChat);
   }
 
   updateAssistantResponse(index: number, newContent: string) {

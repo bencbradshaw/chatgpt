@@ -1,5 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { property } from 'lit/decorators.js';
+import { store } from './store.js';
 
 export class ChatNav extends LitElement {
   static get styles() {
@@ -71,10 +72,10 @@ export class ChatNav extends LitElement {
 
           <button
             @click=${(e) => {
-              sessionStorage.removeItem('history');
+              store.clearOneThread();
               location.reload();
             }}>
-            Clear History
+            Clear Thread
           </button>
         </div>
       </nav>

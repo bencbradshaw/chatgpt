@@ -8,39 +8,32 @@ class Store extends EventTarget {
     super();
     this.threads = localStorage.getItem('threads') ? JSON.parse(localStorage.getItem('threads')) : [];
     this.history = [];
-    this.dispatchEvent(
-      new CustomEvent('history-change', {
-        bubbles: true,
-        composed: true
-      })
-    );
+    this.#emit();
+    console.log('store init', Math.random());
   }
 
   #writeToLocalStorage() {
     localStorage.setItem('threads', JSON.stringify(this.threads));
   }
-
-  addMessage(message: ChatHistoryItem) {
-    this.history.push(message);
-    this.threads[this.activeHistoryIndex] = this.history;
+  #emit() {
     this.dispatchEvent(
       new CustomEvent('history-change', {
         bubbles: true,
         composed: true
       })
     );
+  }
+  addMessage(message: ChatHistoryItem) {
+    this.history.push(message);
+    this.threads[this.activeHistoryIndex] = this.history;
+    this.#emit();
     this.#writeToLocalStorage();
   }
 
   addToMessageContent(message: string, index: number) {
     this.history[index].content += message;
     this.threads[this.activeHistoryIndex] = this.history;
-    this.dispatchEvent(
-      new CustomEvent('history-change', {
-        bubbles: true,
-        composed: true
-      })
-    );
+    this.#emit();
     this.#writeToLocalStorage();
   }
 
@@ -50,24 +43,26 @@ class Store extends EventTarget {
     }
     this.history = [];
     this.activeHistoryIndex = index;
-    this.dispatchEvent(
-      new CustomEvent('history-change', {
-        bubbles: true,
-        composed: true
-      })
-    );
+    this.#emit();
   }
-
+  clearOneThread(threadId: number = this.activeHistoryIndex) {
+    this.threads[threadId] = [];
+    this.#emit();
+    this.#writeToLocalStorage();
+  }
   subscribe<T>(key: string, cb: (value: T) => void) {
-    this.addEventListener('history-change', () => {
-      cb(this[key]);
-    });
-  }
-
-  unsubscribe(key: string, cb: (value) => void) {
-    this.removeEventListener('history-change', () => {
-      cb(this[key]);
-    });
+    const value = this[key] as T;
+    cb(value);
+    const eventListener = (event: Event) => {
+      const value: T = this[key];
+      cb(value);
+    };
+    this.addEventListener('history-change', eventListener);
+    return {
+      unsubscribe: () => {
+        this.removeEventListener('history-change', eventListener);
+      }
+    };
   }
 }
 

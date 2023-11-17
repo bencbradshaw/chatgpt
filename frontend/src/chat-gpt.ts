@@ -19,7 +19,7 @@ const renderer = {
   code(code, language) {
     const validLang = !!(language && hljs.getLanguage(language));
     const highlighted = validLang ? hljs.highlight(code, { language }).value : code;
-    // const highlight2 = highlighted.replaceAll(/&lt;/g, '<').replaceAll(/&gt;/g, '>');
+    //const highlight2 = highlighted.replaceAll(/&lt;/g, '<').replaceAll(/&gt;/g, '>');
     return `
     <div class="button-copy-container">
       <button class="copy" 

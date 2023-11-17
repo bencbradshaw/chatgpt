@@ -20,23 +20,30 @@ export class ChatThreads extends LitElement {
     }
   `;
   @property({ type: Array }) threads: ChatHistory[] = [];
-
+  subscription: { unsubscribe: () => void };
   connectedCallback() {
     super.connectedCallback();
-    store.subscribe<ChatHistory[]>('threads', (threads) => {
+    this.subscription = store.subscribe<ChatHistory[]>('threads', (threads) => {
       this.threads = threads;
-      this.requestUpdate();
+      console.log('threads', threads);
     });
   }
+
   disconnectedCallback(): void {
-    store.unsubscribe('threads', () => {});
     super.disconnectedCallback();
+    this.subscription.unsubscribe();
   }
+
   render() {
     return html`
       <section>
         <p>threads</p>
-        ${this.threads.map((thread) => html` <div class="thread">${thread[0].content.slice(0, 10) + '...'}</div> `)}
+        ${this.threads.map(
+          (thread, i) =>
+            html`
+              <div class="thread" @click=${() => store.selectHistory(i)}>${thread[0].content.slice(0, 10) + '...'}</div>
+            `
+        )}
       </section>
     `;
   }

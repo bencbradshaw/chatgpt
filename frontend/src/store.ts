@@ -18,7 +18,7 @@ class Store extends EventTarget {
     if (count === 0) {
       const defaultThread = {
         id: 0,
-        headline: 'Default',
+        headline: 'default',
         system_message: 'This is the default thread',
         history: []
       };
@@ -45,13 +45,15 @@ class Store extends EventTarget {
   async addMessage(message: ChatHistoryItem) {
     this.activeThread = {
       id: this.activeThreadId,
-      headline: this.activeThread.headline || message.content,
+      headline:
+        this.activeThread.headline === 'thread' || this.activeThread.headline === 'default'
+          ? message.content
+          : this.activeThread.headline,
       system_message: this.activeThread.system_message,
       history: [...this.activeThread.history, message]
     };
+    await this.db.put('threads', this.activeThread);
     this.#emit();
-    // slip
-    this.db.put('threads', this.activeThread);
   }
 
   async addToMessageContent(message: string, index: number) {
@@ -102,12 +104,10 @@ class Store extends EventTarget {
     this.#emit();
   }
 
-  async deleteChatHistoryItem(threadId: IDBValidKey = this.activeThreadId, index: number) {
-    if (!threadId || index < 0 || index >= this.activeThread.history.length) {
-      return;
-    }
+  async deleteChatHistoryItem(index: number, threadId: IDBValidKey = this.activeThreadId) {
     this.activeThread.history.splice(index, 1);
     await this.db.put('threads', this.activeThread);
+    console.log('deleteChatHistoryItem', this.activeThread.history);
     this.#emit();
   }
 

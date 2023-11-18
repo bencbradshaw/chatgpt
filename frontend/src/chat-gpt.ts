@@ -54,9 +54,7 @@ export class ChatGPT extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     store.subscribe<Thread>('activeThread', (thread) => {
-      this.history = thread.history;
-      console.log(this.history);
-      this.requestUpdate();
+      this.history = [...thread.history].reverse();
       console.log('history sub fire');
     });
   }
@@ -294,18 +292,18 @@ export class ChatGPT extends LitElement {
   updateAssistantResponse(index: number, newContent: string) {
     store.addToMessageContent(newContent, index);
   }
-  deleteItem(item) {
-    this.history = this.history.filter((i) => i !== item);
-    this.writeToSessionStorage();
+  deleteItem(index: number) {
+    const reversedIndex = this.history.length - index - 1;
+    store.deleteChatHistoryItem(reversedIndex);
   }
   render() {
     return html`
       <div class="history-outer">
         ${loadingIcon(this.loading)}
-        ${[...this.history].reverse().map(
-          (item) => html`
+        ${this.history.map(
+          (item, i) => html`
             <p class="history ${item.role}">
-              <button class="delete" @click=${(e) => this.deleteItem(item)}>x</button>
+              <button class="delete" @click=${(e) => this.deleteItem(i)}>x</button>
               ${unsafeHTML(marked.parse(item.content))} ${item.custom ? unsafeHTML(item.custom as string) : nothing}
             </p>
           `

@@ -49,6 +49,7 @@ export class ChatNav extends LitElement {
             <option value="dall-e-2">DALL-E 2</option>
             <option value="tts-1">TTS 1</option>
             <option value="vertex">Vertex Code Bison</option>
+            <option value="auto">Auto Engine</option>
           </select>
 
           <input
@@ -74,7 +75,7 @@ export class ChatNav extends LitElement {
             @click=${(e) => {
               store.deleteThread();
             }}>
-            Clear Thread
+            Delete Thread
           </button>
         </div>
       </nav>

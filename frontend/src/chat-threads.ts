@@ -65,7 +65,7 @@ export class ChatThreads extends LitElement {
             <div
               class="thread ${this.activeThreadId === thread.id ? 'active' : ''}"
               @click=${() => store.selectThread(thread.id)}>
-              ${thread.headline}
+              ${thread.headline.slice(0, 10) + '...'}
             </div>
           `;
         })}

@@ -1,4 +1,4 @@
-import { css, html, LitElement } from 'lit';
+import { css, html, LitElement, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { store } from './store.js';
 import { Thread } from './types.js';
@@ -33,7 +33,7 @@ export class ChatThreads extends LitElement {
     }
   `;
   @state() threads: Thread[] = [];
-  @state() activeThreadId: number = 0;
+  @state() activeThreadId: IDBValidKey;
   sub1: { unsubscribe: () => void };
   sub2: { unsubscribe: () => void };
 
@@ -57,6 +57,7 @@ export class ChatThreads extends LitElement {
   }
 
   render() {
+    if (!this.threads.length || this.activeThreadId === undefined) return nothing;
     return html`
       <section>
         ${this.threads.map((thread, i) => {

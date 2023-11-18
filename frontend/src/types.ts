@@ -6,7 +6,7 @@ export interface ChatHistoryItem {
 export type ChatHistory = ChatHistoryItem[];
 
 export interface Thread {
-  id?: number;
+  id?: IDBValidKey;
   headline: string;
   system_message: string;
   history: ChatHistory;

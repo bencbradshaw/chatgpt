@@ -1,54 +1,35 @@
-import { DBSchema, IDBPDatabase, openDB } from 'idb';
+import { iDB } from './idb.js';
 import { ChatHistoryItem, Thread } from './types.js';
 
-interface ChatGPTDB extends DBSchema {
-  threads: {
-    key: number;
-    value: Thread;
-  };
-  indices: {
-    key: string;
-    value: number;
-  };
-}
 class Store extends EventTarget {
-  private db: IDBPDatabase<ChatGPTDB>;
-  private activeThreadId: number;
+  private db: iDB = new iDB();
+  private activeThreadId: IDBValidKey;
   private activeThread: Thread;
   private threads: Thread[] = [];
 
   constructor() {
     super();
-
     this.initDB().then(this.#emit);
   }
-  async getAllWithKeys(storeName: 'threads' | 'indices') {
-    const keys = await this.db.getAllKeys(storeName);
-    const values = await Promise.all(keys.map((key) => this.db.get(storeName, key)));
-    return values.map((value, index) => ({ id: keys[index], ...value }));
-  }
+
   async initDB() {
-    this.db = await openDB<ChatGPTDB>('chatDB', 1, {
-      upgrade(db) {
-        db.createObjectStore('threads', { autoIncrement: true });
-        db.createObjectStore('indices');
-      }
-    });
+    await this.db.open();
     const count = await this.db.count('threads');
     if (count === 0) {
       const defaultThread = {
+        id: 0,
         headline: 'Default',
         system_message: 'This is the default thread',
         history: []
       };
-      const threadId = await this.db.add('threads', defaultThread);
+      const threadId = await this.db.put('threads', defaultThread);
       await this.db.put('indices', threadId, 'activeThreadId');
     }
     this.activeThreadId = (await this.db.get('indices', 'activeThreadId')) || 0;
-    this.threads = await this.getAllWithKeys('threads');
+    this.threads = await this.db.getAll('threads', true);
     this.activeThread = {
       id: this.activeThreadId,
-      ...(await this.db.get('threads', this.activeThreadId))
+      ...(await this.db.get<Thread>('threads', this.activeThreadId))
     };
   }
 
@@ -70,7 +51,7 @@ class Store extends EventTarget {
     };
     this.#emit();
     // slip
-    this.db.put('threads', this.activeThread, this.activeThreadId);
+    this.db.put('threads', this.activeThread);
   }
 
   async addToMessageContent(message: string, index: number) {
@@ -83,12 +64,15 @@ class Store extends EventTarget {
     };
     this.#emit();
     // slip
-    this.db.put('threads', this.activeThread, this.activeThreadId);
+    this.db.put('threads', this.activeThread);
   }
 
-  async selectThread(threadId: number) {
+  async selectThread(threadId: IDBValidKey) {
     this.activeThreadId = threadId;
-    this.activeThread = { id: this.activeThreadId, ...(await this.db.get('threads', threadId)) };
+    this.activeThread = {
+      id: this.activeThreadId,
+      ...(await this.db.get<Thread>('threads', threadId))
+    };
     this.#emit();
   }
 
@@ -103,10 +87,11 @@ class Store extends EventTarget {
       id: this.activeThreadId,
       ...thread
     };
+    this.threads = await this.db.getAll('threads', true);
     this.#emit();
   }
 
-  async clearOneThread(threadId: number = this.activeThreadId) {
+  async clearOneThread(threadId = this.activeThreadId) {
     this.#emit();
   }
 

@@ -87,4 +87,12 @@ export class IDB {
       return objectStore.getAll();
     });
   }
+
+  delete(storeName: string, key: IDBValidKey): Promise<void> {
+    return this.promisify<void>(() => {
+      const transaction = this.db.transaction([storeName], 'readwrite');
+      const objectStore = transaction.objectStore(storeName);
+      return objectStore.delete(key);
+    });
+  }
 }

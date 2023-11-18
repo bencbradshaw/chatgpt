@@ -91,11 +91,23 @@ class Store extends EventTarget {
     this.#emit();
   }
 
-  async clearOneThread(threadId = this.activeThreadId) {
+  async deleteThread(threadId: IDBValidKey = this.activeThreadId) {
+    await this.db.delete('threads', threadId);
+    this.threads = await this.db.getAll('threads');
+    if (threadId === this.activeThreadId) {
+      this.activeThreadId = this.threads.length > 0 ? this.threads[0].id : null;
+      this.activeThread = this.threads.length > 0 ? this.threads[0] : null;
+    }
+    await this.db.put('indices', this.activeThreadId, 'activeThreadId');
     this.#emit();
   }
 
-  async deleteItem(threadId = this.activeThreadId) {
+  async deleteChatHistoryItem(threadId: IDBValidKey = this.activeThreadId, index: number) {
+    if (!threadId || index < 0 || index >= this.activeThread.history.length) {
+      return;
+    }
+    this.activeThread.history.splice(index, 1);
+    await this.db.put('threads', this.activeThread);
     this.#emit();
   }
 

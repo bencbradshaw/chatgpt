@@ -72,8 +72,7 @@ export class ChatNav extends LitElement {
 
           <button
             @click=${(e) => {
-              store.clearOneThread();
-              location.reload();
+              store.deleteThread();
             }}>
             Clear Thread
           </button>

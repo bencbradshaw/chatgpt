@@ -1,8 +1,8 @@
-import { iDB } from './idb.js';
+import { IDB } from './idb.js';
 import { ChatHistoryItem, Thread } from './types.js';
 
 class Store extends EventTarget {
-  private db: iDB = new iDB();
+  private db: IDB = new IDB();
   private activeThreadId: IDBValidKey;
   private activeThread: Thread;
   private threads: Thread[] = [];
@@ -26,7 +26,7 @@ class Store extends EventTarget {
       await this.db.put('indices', threadId, 'activeThreadId');
     }
     this.activeThreadId = (await this.db.get('indices', 'activeThreadId')) || 0;
-    this.threads = await this.db.getAll('threads', true);
+    this.threads = await this.db.getAll('threads');
     this.activeThread = {
       id: this.activeThreadId,
       ...(await this.db.get<Thread>('threads', this.activeThreadId))
@@ -87,7 +87,7 @@ class Store extends EventTarget {
       id: this.activeThreadId,
       ...thread
     };
-    this.threads = await this.db.getAll('threads', true);
+    this.threads = await this.db.getAll('threads');
     this.#emit();
   }
 

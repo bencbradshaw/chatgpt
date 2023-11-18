@@ -1,6 +1,18 @@
-export class iDB {
+export class IDB {
   private db: IDBDatabase;
   constructor(private dbName: string = 'chat-gpt', private stores: string[] = ['threads', 'indices']) {}
+
+  private promisify<T>(operation: () => IDBRequest): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const request = operation();
+      request.onerror = () => {
+        reject(request.error);
+      };
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+    });
+  }
 
   open(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -15,11 +27,12 @@ export class iDB {
         const db = (event.target as IDBOpenDBRequest).result;
         const storeNames = Array.from(db.objectStoreNames);
         for (const store of this.stores) {
-          if (!storeNames.includes(store) && store !== 'indices') {
-            db.createObjectStore(store, { keyPath: 'id', autoIncrement: true });
-          }
-          if (!storeNames.includes(store) && store === 'indices') {
-            db.createObjectStore(store);
+          if (!storeNames.includes(store)) {
+            if (store === 'indices') {
+              db.createObjectStore(store);
+            } else {
+              db.createObjectStore(store, { keyPath: 'id', autoIncrement: true });
+            }
           }
         }
       };
@@ -35,102 +48,43 @@ export class iDB {
     });
   }
 
-  count(storeName: string) {
-    return new Promise<number>((resolve, reject) => {
+  count(storeName: string): Promise<number> {
+    return this.promisify<number>(() => {
       const transaction = this.db.transaction([storeName], 'readonly');
       const objectStore = transaction.objectStore(storeName);
-      const request = objectStore.count();
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
+      return objectStore.count();
     });
   }
 
   get<T>(storeName: string, key: IDBValidKey): Promise<T | undefined> {
-    return new Promise<T | undefined>((resolve, reject) => {
+    return this.promisify<T>(() => {
       const transaction = this.db.transaction([storeName], 'readonly');
       const objectStore = transaction.objectStore(storeName);
-      const request = objectStore.get(key);
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
+      return objectStore.get(key);
     });
   }
 
   put<T>(storeName: string, value: T, outlineKey?: IDBValidKey): Promise<IDBValidKey> {
-    return new Promise<IDBValidKey>((resolve, reject) => {
+    return this.promisify<IDBValidKey>(() => {
       const transaction = this.db.transaction([storeName], 'readwrite');
       const objectStore = transaction.objectStore(storeName);
-      let request;
-      if (outlineKey) {
-        request = objectStore.put(value, outlineKey);
-      } else {
-        request = objectStore.put(value);
-      }
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
+      return outlineKey ? objectStore.put(value, outlineKey) : objectStore.put(value);
     });
   }
 
   add<T>(storeName: string, value: T): Promise<IDBValidKey> {
-    return new Promise<IDBValidKey>((resolve, reject) => {
+    return this.promisify<IDBValidKey>(() => {
       const transaction = this.db.transaction([storeName], 'readwrite');
       const objectStore = transaction.objectStore(storeName);
-      const request = objectStore.add(value);
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
+      return objectStore.add(value);
     });
   }
 
-  getAll<T>(storeName: string, includeKeys: boolean = false): Promise<(T & { key?: IDBValidKey })[]> {
-    return new Promise<any>((resolve, reject) => {
+  getAll<T>(storeName: string): Promise<T[]> {
+    return this.promisify<T[]>(() => {
       const transaction = this.db.transaction([storeName], 'readonly');
       const objectStore = transaction.objectStore(storeName);
-      const getData = objectStore.getAll();
-      const getKeys = includeKeys ? objectStore.getAllKeys() : null;
-
-      const errorHandler = (event: Event) => {
-        reject((event.target as IDBRequest).error);
-      };
-
-      getData.onerror = errorHandler;
-
-      if (getKeys) getKeys.onerror = errorHandler;
-
-      getData.onsuccess = () => {
-        if (getKeys) {
-          getKeys.onsuccess = () => {
-            const data = getData.result;
-            const keys = getKeys.result;
-            const combinedResults = data.map((item, index) => ({ ...item, key: keys[index] }));
-            resolve(combinedResults);
-          };
-        } else {
-          resolve(getData.result);
-        }
-      };
+      return objectStore.getAll();
     });
   }
 }

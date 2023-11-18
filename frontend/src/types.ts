@@ -4,3 +4,10 @@ export interface ChatHistoryItem {
   custom?: string;
 }
 export type ChatHistory = ChatHistoryItem[];
+
+export interface Thread {
+  id?: number;
+  headline: string;
+  system_message: string;
+  history: ChatHistory;
+}

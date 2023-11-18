@@ -1,7 +1,7 @@
 import { css, html, LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
 import { store } from './store.js';
-import { ChatHistory } from './types.js';
+import { Thread } from './types.js';
 @customElement('chat-threads')
 export class ChatThreads extends LitElement {
   static styles = css`
@@ -32,17 +32,21 @@ export class ChatThreads extends LitElement {
       cursor: pointer;
     }
   `;
-  @property({ type: Array }) threads: ChatHistory[] = [];
-  @property({ type: Number }) activeHistoryIndex: number = 0;
+  @state() threads: Thread[] = [];
+  @state() activeThreadId: number = 0;
   sub1: { unsubscribe: () => void };
   sub2: { unsubscribe: () => void };
+
   connectedCallback() {
     super.connectedCallback();
-    this.sub1 = store.subscribe<ChatHistory[]>('threads', (threads) => {
+    this.sub1 = store.subscribe<Thread[]>('threads', (threads) => {
       this.threads = threads;
+      this.requestUpdate();
+      console.log('threads sub');
     });
-    this.sub2 = store.subscribe<number>('activeHistoryIndex', (idx) => {
-      this.activeHistoryIndex = idx;
+    this.sub2 = store.subscribe<number>('activeThreadId', (idx) => {
+      this.activeThreadId = idx;
+      console.log('threads sub idx', this.activeThreadId);
     });
   }
 
@@ -57,8 +61,10 @@ export class ChatThreads extends LitElement {
       <section>
         ${this.threads.map((thread, i) => {
           return html`
-            <div class="thread ${this.activeHistoryIndex === i ? 'active' : ''}" @click=${() => store.selectHistory(i)}>
-              ${(thread?.length ? thread : [])[0]?.content?.slice(0, 10) + '...' || 'empty thread'}
+            <div
+              class="thread ${this.activeThreadId === thread.id ? 'active' : ''}"
+              @click=${() => store.selectThread(thread.id)}>
+              ${thread.headline}
             </div>
           `;
         })}

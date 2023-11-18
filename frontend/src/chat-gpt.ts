@@ -8,7 +8,7 @@ import { ChatNav } from './chat-nav.js';
 import { githubDarkDimmed } from './github-dark-dimmed.css.js';
 import { loadingIcon } from './loading-icon.js';
 import { store } from './store.js';
-import { ChatHistory } from './types.js';
+import { ChatHistory, Thread } from './types.js';
 const renderer = {
   image(href = '', title = 'image', text = 'image') {
     return `
@@ -53,9 +53,11 @@ export class ChatGPT extends LitElement {
     sessionStorage.getItem('engine') ?? document.querySelector<ChatNav>('chat-nav').engine ?? 'gpt-4-1106-preview';
   connectedCallback() {
     super.connectedCallback();
-    store.subscribe<ChatHistory>('history', (history) => {
-      this.history = history;
-      console.log('history sub');
+    store.subscribe<Thread>('activeThread', (thread) => {
+      this.history = thread.history;
+      console.log(this.history);
+      this.requestUpdate();
+      console.log('history sub fire');
     });
   }
   async performPostRequest(endpoint: string, body: any): Promise<any> {
@@ -112,7 +114,7 @@ export class ChatGPT extends LitElement {
     const prompt = element.value;
     const includeContext = document.querySelector<ChatNav>('chat-nav').includeContext;
     element.value = '';
-    this.addToHistory('user', prompt);
+    await this.addToHistory('user', prompt);
 
     const reqBody = {
       ...(includeContext
@@ -284,9 +286,9 @@ export class ChatGPT extends LitElement {
     }
   }
 
-  addToHistory(role: 'user' | 'assistant', content: string, custom?: string) {
+  async addToHistory(role: 'user' | 'assistant', content: string, custom?: string) {
     const newChat = { role, content, ...(custom ? { custom: custom } : {}) };
-    store.addMessage(newChat);
+    await store.addMessage(newChat);
   }
 
   updateAssistantResponse(index: number, newContent: string) {

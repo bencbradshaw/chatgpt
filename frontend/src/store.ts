@@ -1,89 +1,124 @@
-import { IDBPDatabase, openDB } from 'idb';
-import { ChatHistory, ChatHistoryItem } from './types.js';
+import { DBSchema, IDBPDatabase, openDB } from 'idb';
+import { ChatHistoryItem, Thread } from './types.js';
 
+interface ChatGPTDB extends DBSchema {
+  threads: {
+    key: number;
+    value: Thread;
+  };
+  indices: {
+    key: string;
+    value: number;
+  };
+}
 class Store extends EventTarget {
-  private db: IDBPDatabase;
-  private activeHistoryIndex: number;
-  private history: ChatHistoryItem[] = [];
-  private threads: ChatHistory[] = [];
+  private db: IDBPDatabase<ChatGPTDB>;
+  private activeThreadId: number;
+  private activeThread: Thread;
+  private threads: Thread[] = [];
 
   constructor() {
     super();
-    this.initDB().then(() => {
-      this.#emit();
-    });
-  }
 
+    this.initDB().then(this.#emit);
+  }
+  async getAllWithKeys(storeName: 'threads' | 'indices') {
+    const keys = await this.db.getAllKeys(storeName);
+    const values = await Promise.all(keys.map((key) => this.db.get(storeName, key)));
+    return values.map((value, index) => ({ id: keys[index], ...value }));
+  }
   async initDB() {
-    this.db = await openDB('chatDB', 1, {
+    this.db = await openDB<ChatGPTDB>('chatDB', 1, {
       upgrade(db) {
         db.createObjectStore('threads', { autoIncrement: true });
         db.createObjectStore('indices');
       }
     });
-    this.activeHistoryIndex = (await this.db.get('indices', 'activeHistoryIndex')) || 0;
-    this.threads = (await this.db.get('threads', 1)) || [];
-    this.history = this.threads[this.activeHistoryIndex] || [];
+    const count = await this.db.count('threads');
+    if (count === 0) {
+      const defaultThread = {
+        headline: 'Default',
+        system_message: 'This is the default thread',
+        history: []
+      };
+      const threadId = await this.db.add('threads', defaultThread);
+      await this.db.put('indices', threadId, 'activeThreadId');
+    }
+    this.activeThreadId = (await this.db.get('indices', 'activeThreadId')) || 0;
+    this.threads = await this.getAllWithKeys('threads');
+    this.activeThread = {
+      id: this.activeThreadId,
+      ...(await this.db.get('threads', this.activeThreadId))
+    };
   }
 
-  async #writeToIndexedDB() {
-    await this.db.put('threads', this.threads, 1);
-    await this.db.put('indices', this.activeHistoryIndex, 'activeHistoryIndex');
-  }
-
-  #emit() {
+  #emit = () => {
     this.dispatchEvent(
       new CustomEvent('history-change', {
         bubbles: true,
         composed: true
       })
     );
-  }
+  };
 
   async addMessage(message: ChatHistoryItem) {
-    this.history.push(message);
-    this.threads[this.activeHistoryIndex] = this.history;
+    this.activeThread = {
+      id: this.activeThreadId,
+      headline: this.activeThread.headline || message.content,
+      system_message: this.activeThread.system_message,
+      history: [...this.activeThread.history, message]
+    };
     this.#emit();
-    this.#writeToIndexedDB();
+    // slip
+    this.db.put('threads', this.activeThread, this.activeThreadId);
   }
 
   async addToMessageContent(message: string, index: number) {
-    this.history[index].content += message;
-    this.history = [...this.history];
-    this.threads[this.activeHistoryIndex] = this.history;
-    this.#writeToIndexedDB();
+    this.activeThread.history[index].content += message;
+    this.activeThread = {
+      id: this.activeThreadId,
+      headline: this.activeThread.headline,
+      system_message: this.activeThread.system_message,
+      history: this.activeThread.history
+    };
     this.#emit();
+    // slip
+    this.db.put('threads', this.activeThread, this.activeThreadId);
   }
 
-  async selectHistory(index: number) {
-    if (!this.threads[index]) {
-      this.threads[index] = [];
-    }
-    this.history = this.threads[index];
-    this.activeHistoryIndex = index;
-    this.#writeToIndexedDB();
+  async selectThread(threadId: number) {
+    this.activeThreadId = threadId;
+    this.activeThread = { id: this.activeThreadId, ...(await this.db.get('threads', threadId)) };
     this.#emit();
   }
 
   async createNewThread() {
-    this.threads.push([]);
-    this.#writeToIndexedDB();
-    this.selectHistory(this.threads.length - 1);
-  }
-
-  async clearOneThread(threadId: number = this.activeHistoryIndex) {
-    this.threads[threadId] = [];
-    this.#writeToIndexedDB();
+    const thread = {
+      headline: 'thread',
+      system_message: '',
+      history: []
+    };
+    this.activeThreadId = await this.db.add('threads', thread);
+    this.activeThread = {
+      id: this.activeThreadId,
+      ...thread
+    };
     this.#emit();
   }
 
-  async deleteItem(chatItemId: number, threadId = this.activeHistoryIndex) {
-    // Implement deletion logic
+  async clearOneThread(threadId: number = this.activeThreadId) {
+    this.#emit();
+  }
+
+  async deleteItem(threadId = this.activeThreadId) {
+    this.#emit();
   }
 
   subscribe<T>(key: string, cb: (value: T) => void) {
     const value = this[key] as T;
-    cb(value);
+    if (value) {
+      cb(value);
+    }
     const eventListener = (event: Event) => {
       cb(this[key]);
     };

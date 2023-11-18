@@ -107,7 +107,6 @@ class Store extends EventTarget {
   async deleteChatHistoryItem(index: number, threadId: IDBValidKey = this.activeThreadId) {
     this.activeThread.history.splice(index, 1);
     await this.db.put('threads', this.activeThread);
-    console.log('deleteChatHistoryItem', this.activeThread.history);
     this.#emit();
   }
 

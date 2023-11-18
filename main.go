@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"chatgpt/models"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -32,58 +33,6 @@ const (
 )
 
 var httpClient = &http.Client{}
-
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type ChatRequest struct {
-	Model    string    `json:"model"`
-	Messages []Message `json:"messages"`
-	Stream   bool      `json:"stream"`
-}
-
-type ChatPrompt struct {
-	Engine   string    `json:"engine"`
-	Messages []Message `json:"messages"`
-}
-
-type OpenAIResponse struct {
-	Choices []struct {
-		Message struct {
-			Content string `json:"content"`
-		} `json:"message"`
-	} `json:"choices"`
-}
-
-type Chunk struct {
-	ID      string `json:"id"`
-	Object  string `json:"object"`
-	Created int    `json:"created"`
-	Model   string `json:"model"`
-	Choices []struct {
-		Index int `json:"index"`
-		Delta struct {
-			Content string `json:"content"`
-		} `json:"delta"`
-		FinishReason interface{} `json:"finish_reason"`
-	} `json:"choices"`
-}
-
-type ImageRequest struct {
-	Model  string `json:"model"`
-	Prompt string `json:"prompt"`
-	N      int    `json:"n"`
-	Size   string `json:"size"`
-}
-
-type ImageResponse struct {
-	Created int `json:"created"`
-	Data    []struct {
-		URL string `json:"url"`
-	} `json:"data"`
-}
 
 func init() {
 	// Load environment variables at the start of the application.
@@ -131,7 +80,7 @@ func handleChatRequest(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling chat request")
 	defer r.Body.Close()
 
-	var chatPrompt ChatPrompt
+	var chatPrompt models.ChatPrompt
 	if err := json.NewDecoder(r.Body).Decode(&chatPrompt); err != nil {
 		respondWithError(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -139,7 +88,7 @@ func handleChatRequest(w http.ResponseWriter, r *http.Request) {
 
 	authToken := os.Getenv(envOpenAiSk)
 
-	chatRequest := ChatRequest{
+	chatRequest := models.ChatRequest{
 		Model:    chatPrompt.Engine,
 		Stream:   true,
 		Messages: chatPrompt.Messages,
@@ -174,7 +123,7 @@ func processChatStream(openAIStream io.Reader, w http.ResponseWriter) {
 			break
 		}
 		jsonStr += strings.TrimPrefix(line, "data: ")
-		var chunk Chunk
+		var chunk models.Chunk
 		if err := json.Unmarshal([]byte(jsonStr), &chunk); err != nil {
 			continue
 		}
@@ -203,7 +152,7 @@ func processChatStream(openAIStream io.Reader, w http.ResponseWriter) {
 func handleImageRequest(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling image request")
 	defer r.Body.Close()
-	var imgReq ImageRequest
+	var imgReq models.ImageRequest
 	if err := json.NewDecoder(r.Body).Decode(&imgReq); err != nil {
 		respondWithError(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -218,7 +167,7 @@ func handleImageRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	var res ImageResponse
+	var res models.ImageResponse
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		respondWithError(w, "Error decoding OpenAI response: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -376,29 +325,13 @@ func handleVisionRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var apiResponse OpenAIResponse
+	var apiResponse models.OpenAIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
 		respondWithError(w, "Error decoding OpenAI API response: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	respondWithJSON(w, map[string]interface{}{"content": apiResponse.Choices[0].Message.Content})
-}
-
-type VertexMessage struct {
-	Author  string `json:"author"`
-	Content string `json:"content"`
-}
-
-type ChatRequestML struct {
-	Instances []struct {
-		Messages []Message `json:"messages"`
-	} `json:"instances"`
-	Parameters struct {
-		CandidateCount  int     `json:"candidateCount"`
-		MaxOutputTokens int     `json:"maxOutputTokens"`
-		Temperature     float64 `json:"temperature"`
-	} `json:"parameters"`
 }
 
 func handleVertexRequest(w http.ResponseWriter, r *http.Request) {
@@ -424,21 +357,21 @@ func handleVertexRequest(w http.ResponseWriter, r *http.Request) {
 	tokenSource := creds.TokenSource
 
 	var requestBody struct {
-		Messages []VertexMessage `json:"messages"`
+		Messages []models.VertexMessage `json:"messages"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		respondWithError(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	messages := make([]Message, len(requestBody.Messages))
+	messages := make([]models.Message, len(requestBody.Messages))
 	for i, vMsg := range requestBody.Messages {
-		messages[i] = Message{Role: vMsg.Author, Content: vMsg.Content} // Make sure Role matches the expected value for Vertex AI
+		messages[i] = models.Message{Role: vMsg.Author, Content: vMsg.Content} // Make sure Role matches the expected value for Vertex AI
 	}
 
-	chatReqBody := ChatRequestML{
+	chatReqBody := models.ChatRequestML{
 		Instances: []struct {
-			Messages []Message `json:"messages"`
+			Messages []models.Message `json:"messages"`
 		}{
 			{
 				Messages: messages, // Use the converted messages here
@@ -497,12 +430,6 @@ func handleVertexRequest(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-type TtsRequest struct {
-	Model string `json:"model"`
-	Input string `json:"input"`
-	Voice string `json:"voice"`
-}
-
 func handleTtsRequest(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling TTS (Text-to-Speech) request")
 	defer r.Body.Close()
@@ -512,7 +439,7 @@ func handleTtsRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var ttsReq TtsRequest
+	var ttsReq models.TtsRequest
 	if err := json.NewDecoder(r.Body).Decode(&ttsReq); err != nil {
 		respondWithError(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -544,6 +471,37 @@ func handleTtsRequest(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error streaming TTS audio response to client:", err)
 	}
 }
+func handleAutoRouteReq(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	if r.Method != http.MethodPost {
+		respondWithError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read the request body for inspection.
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		respondWithError(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+	// Restore the body for subsequent reads from other handlers.
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	// Attempt to determine the type of request.
+	var data map[string]interface{}
+	err = json.Unmarshal(bodyBytes, &data)
+	if err != nil {
+		respondWithError(w, "Error unmarshalling JSON body", http.StatusBadRequest)
+		return
+	}
+
+	if _, ok := data["model"]; ok && r.Header.Get("Content-Type") == "multipart/form-data" {
+		handleVisionRequest(w, r)
+	}
+
+}
+
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Handling request:", r.URL.Path)
@@ -567,6 +525,8 @@ func main() {
 			handleVertexRequest(w, r)
 		case "/tts":
 			handleTtsRequest(w, r)
+		case "/auto":
+			handleAutoRouteReq(w, r)
 		default:
 			http.NotFound(w, r)
 		}

@@ -54,8 +54,8 @@ export class ChatGPT extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     store.subscribe<Thread>('activeThread', (thread) => {
-      this.history = [...thread.history].reverse();
-      console.log('history sub fire');
+      this.history = thread.history;
+      this.requestUpdate();
     });
   }
   async performPostRequest(endpoint: string, body: any): Promise<any> {
@@ -146,7 +146,6 @@ export class ChatGPT extends LitElement {
         this.loading = false;
         this.shadowRoot.querySelector('.history-outer').scrollTop = 0;
       }
-      this.writeToSessionStorage();
     } catch (err) {
       this.addToHistory('assistant', 'http error. try again');
     } finally {
@@ -179,7 +178,7 @@ export class ChatGPT extends LitElement {
     try {
       const response = await this.performPostRequest('/vertex', requestBody);
       const json = await response.json();
-      console.log('json', json);
+
       if (!json.content) {
         throw new Error('No content in response');
       }
@@ -216,14 +215,6 @@ export class ChatGPT extends LitElement {
       this.addToHistory('assistant', `http error.${err} try again`);
     } finally {
       this.loading = false;
-    }
-  }
-
-  writeToSessionStorage() {
-    try {
-      sessionStorage.setItem('history', JSON.stringify(this.history));
-    } catch (err) {
-      console.log('error writing to session storage. probably full. clear history and try again', err);
     }
   }
 
@@ -280,7 +271,6 @@ export class ChatGPT extends LitElement {
       this.addToHistory('assistant', 'TTS error. Try again.');
     } finally {
       this.loading = false;
-      console.log('loading false');
     }
   }
 
@@ -300,7 +290,7 @@ export class ChatGPT extends LitElement {
     return html`
       <div class="history-outer">
         ${loadingIcon(this.loading)}
-        ${this.history.map(
+        ${[...this.history].reverse().map(
           (item, i) => html`
             <p class="history ${item.role}">
               <button class="delete" @click=${(e) => this.deleteItem(i)}>x</button>

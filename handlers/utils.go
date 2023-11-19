@@ -144,3 +144,32 @@ func downloadAndSaveImage(imageUrl string, w http.ResponseWriter) {
 
 	respondWithJSON(w, map[string]string{"url": strings.Replace(filename, "./frontend", "", 1)})
 }
+
+func stringifyRequest(r *http.Request) (string, error) {
+	var sb strings.Builder
+
+	// Start with the request line
+	sb.WriteString(fmt.Sprintf("%s %s %s\n", r.Method, r.URL.Path, r.Proto))
+
+	// Add request headers
+	for name, values := range r.Header {
+		for _, value := range values {
+			sb.WriteString(fmt.Sprintf("%s: %s\n", name, value))
+		}
+	}
+
+	// Read the body without affecting the original reader (it cannot be re-read).
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// Write the body string to the string builder.
+	sb.WriteString("\n")
+	sb.WriteString(string(bodyBytes))
+
+	// Since we read the body, replace the body with a new reader so it can be read again later.
+	r.Body = io.NopCloser(strings.NewReader(string(bodyBytes)))
+
+	return sb.String(), nil
+}

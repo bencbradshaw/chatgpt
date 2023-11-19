@@ -20,32 +20,32 @@ func init() {
 }
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Handling request:", r.URL.Path)
-		log.Println("Request method:", r.Method)
-		log.Println("Request Content-Type:", r.Header.Get("Content-Type"))
-		w.Header().Set(accessControlAllow, "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		w.Header().Set(accessControlHeaders, "Accept, Content-Type")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
+	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
+		log.Println("Handling request:", req.URL.Path)
+		log.Println("Request method:", req.Method)
+		log.Println("Request Content-Type:", req.Header.Get("Content-Type"))
+		res.Header().Set(accessControlAllow, "*")
+		res.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		res.Header().Set(accessControlHeaders, "Accept, Content-Type")
+		if req.Method == http.MethodOptions {
+			res.WriteHeader(http.StatusOK)
 			return
 		}
-		switch r.URL.Path {
+		switch req.URL.Path {
 		case "/":
-			handlers.HandleChatRequest(w, r)
+			handlers.HandleChatRequest(res, req)
 		case "/image":
-			handlers.HandleImageRequest(w, r)
+			handlers.HandleImageRequest(res, req)
 		case "/vision":
-			handlers.HandleVisionRequest(w, r)
+			handlers.HandleVisionRequest(res, req)
 		case "/vertex":
-			handlers.HandleVertexRequest(w, r)
+			handlers.HandleVertexRequest(res, req)
 		case "/tts":
-			handlers.HandleTtsRequest(w, r)
+			handlers.HandleTtsRequest(res, req)
 		case "/auto":
-			handlers.HandleAuto(w, r)
+			handlers.HandleAuto(res, req)
 		default:
-			http.NotFound(w, r)
+			http.NotFound(res, req)
 		}
 		log.Println("Response end")
 	})

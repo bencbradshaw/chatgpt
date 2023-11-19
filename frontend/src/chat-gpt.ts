@@ -192,6 +192,15 @@ export class ChatGPT extends LitElement {
     }
   }
 
+  async runAutoReq() {
+    // auto request first gets the prompt content
+    // it checks for the presence of an image
+    // it then posts to auto with either applicaton/json or multipart/form-data
+    // it also checks for includecontext
+    // it will then await the response
+    // the response is standardized to be some sort of content for the assistant messag
+  }
+
   async runVisionReq() {
     const element = this.textareaEl;
     const prompt = element.value;

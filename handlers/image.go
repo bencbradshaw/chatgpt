@@ -11,7 +11,7 @@ import (
 func HandleImageRequest(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling image request")
 	defer r.Body.Close()
-	var imgReq models.ImageRequest
+	var imgReq models.OpenAIImageRequest
 	if err := json.NewDecoder(r.Body).Decode(&imgReq); err != nil {
 		respondWithError(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -26,7 +26,7 @@ func HandleImageRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	var res models.ImageResponse
+	var res models.OpenAIImageResponse
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		respondWithError(w, "Error decoding OpenAI response: "+err.Error(), http.StatusInternalServerError)
 		return

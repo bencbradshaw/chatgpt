@@ -16,12 +16,14 @@ func ClassifyRequest(fullStringify string) string {
 		Content: "You are a classifier machine. Based on the text you receive, which is an http request headers and body, you will classify the request as one of the following: chat, image, vision, tts, or other.",
 	}
 
-	chatReq := models.ChatRequest{
+	chatReq := models.OpenAIChatRequest{
 		Model: "gpt-4-1106-preview",
-		Messages: append([]models.Message{defaultSysMessage}, models.Message{
-			Role:    "user",
-			Content: fullStringify,
-		}),
+		Messages: append(
+			[]models.Message{defaultSysMessage},
+			models.Message{
+				Role:    "user",
+				Content: fullStringify,
+			}),
 		Stream: false,
 	}
 	authToken := os.Getenv(envOpenAiSk)
@@ -59,14 +61,16 @@ func HandleAuto(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-
 	classification := ClassifyRequest(fullStringify)
 	switch classification {
 	case "chat":
 		HandleChatRequest(w, r)
 	case "image":
 		HandleImageRequest(w, r)
-	// ... handle other cases similarly
+	case "vision":
+		HandleVisionRequest(w, r)
+	case "tts":
+		HandleTtsRequest(w, r)
 	default:
 		respondWithError(w, "unsupported", http.StatusBadRequest)
 	}

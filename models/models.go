@@ -5,15 +5,10 @@ type Message struct {
 	Content string `json:"content"`
 }
 
-type ChatRequest struct {
+type OpenAIChatRequest struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
 	Stream   bool      `json:"stream"`
-}
-
-type ChatPrompt struct {
-	Engine   string    `json:"engine"`
-	Messages []Message `json:"messages"`
 }
 
 type OpenAIResponse struct {
@@ -38,21 +33,21 @@ type Chunk struct {
 	} `json:"choices"`
 }
 
-type ImageRequest struct {
+type OpenAIImageRequest struct {
 	Model  string `json:"model"`
 	Prompt string `json:"prompt"`
 	N      int    `json:"n"`
 	Size   string `json:"size"`
 }
 
-type ImageResponse struct {
+type OpenAIImageResponse struct {
 	Created int `json:"created"`
 	Data    []struct {
 		URL string `json:"url"`
 	} `json:"data"`
 }
 
-type TtsRequest struct {
+type OpenAITtsRequest struct {
 	Model string `json:"model"`
 	Input string `json:"input"`
 	Voice string `json:"voice"`
@@ -72,4 +67,27 @@ type ChatRequestML struct {
 		MaxOutputTokens int     `json:"maxOutputTokens"`
 		Temperature     float64 `json:"temperature"`
 	} `json:"parameters"`
+}
+
+type Engine string
+
+const (
+	GPT4Preview       Engine = "gpt-4-1106-preview"
+	GPT4              Engine = "gpt-4"
+	GPT4VisionPreview Engine = "gpt-4-vision-preview"
+	GPT3_5Turbo       Engine = "gpt-3.5-turbo"
+	DallE3            Engine = "dall-e-3"
+	DallE2            Engine = "dall-e-2"
+	TTS1              Engine = "tts-1"
+	Vertex            Engine = "vertex"
+	Auto              Engine = "auto"
+)
+
+type Thread struct {
+	ID             int       `json:"id"`
+	Headline       string    `json:"headline"`
+	SystemMessage  string    `json:"system_message"`
+	SelectedEngine Engine    `json:"selected_engine"`
+	IncludeContext bool      `json:"include_context"`
+	History        []Message `json:"history"`
 }

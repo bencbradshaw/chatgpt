@@ -18,7 +18,7 @@ func HandleTtsRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var ttsReq models.TtsRequest
+	var ttsReq models.OpenAITtsRequest
 	if err := json.NewDecoder(r.Body).Decode(&ttsReq); err != nil {
 		respondWithError(w, "Invalid request body", http.StatusBadRequest)
 		return

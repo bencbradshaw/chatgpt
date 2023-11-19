@@ -4,9 +4,10 @@ import { customElement, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked } from 'marked';
 import { chatGptStyles } from './chat-gpt.css.js';
-import { ChatNav } from './chat-nav.js';
 import { githubDarkDimmed } from './github-dark-dimmed.css.js';
 import { loadingIcon } from './loading-icon.js';
+import { store } from './store.js';
+import { ChatHistory, Engine, Thread } from './types.js';
 const renderer = {
   image(href = '', title = 'image', text = 'image') {
     return `
@@ -18,7 +19,7 @@ const renderer = {
   code(code, language) {
     const validLang = !!(language && hljs.getLanguage(language));
     const highlighted = validLang ? hljs.highlight(code, { language }).value : code;
-    // const highlight2 = highlighted.replaceAll(/&lt;/g, '<').replaceAll(/&gt;/g, '>');
+    //const highlight2 = highlighted.replaceAll(/&lt;/g, '<').replaceAll(/&gt;/g, '>');
     return `
     <div class="button-copy-container">
       <button class="copy" 
@@ -45,15 +46,20 @@ export class ChatGPT extends LitElement {
   `;
   @query('textarea') textareaEl: HTMLTextAreaElement;
   @state() loading = false;
-  @state() history: {
-    role: 'user' | 'assistant';
-    content: string;
-    custom?: string;
-  }[] = sessionStorage.getItem('history') ? JSON.parse(sessionStorage.getItem('history')) : [];
+  @state() history: ChatHistory = [];
   @state() miniPreviewImageURL = '';
-  @state() engine =
-    sessionStorage.getItem('engine') ?? document.querySelector<ChatNav>('chat-nav').engine ?? 'gpt-4-1106-preview';
-
+  @state() system_message: string;
+  @state() engine: Engine;
+  @state() include_context: boolean;
+  connectedCallback() {
+    super.connectedCallback();
+    store.subscribe<Thread>('activeThread', (thread) => {
+      this.history = thread.history;
+      this.engine = thread.selected_engine;
+      this.include_context = thread.include_context;
+      this.requestUpdate();
+    });
+  }
   async performPostRequest(endpoint: string, body: any): Promise<any> {
     this.loading = true;
     let headers = {};
@@ -67,7 +73,7 @@ export class ChatGPT extends LitElement {
         Accept: endpoint === '/' ? 'text/event-stream' : 'application/json'
       };
     }
-    const response = await fetch(`http://localhost:8080${endpoint}`, {
+    const response = await fetch(`http://localhost:8081${endpoint}`, {
       method: 'POST',
       headers,
       body: body instanceof FormData ? body : JSON.stringify(body)
@@ -76,7 +82,7 @@ export class ChatGPT extends LitElement {
   }
 
   async submit(e: Event) {
-    const engine = document.querySelector<ChatNav>('chat-nav').engine;
+    const engine = this.engine;
     switch (engine) {
       case 'gpt-4-1106-preview':
       case 'gpt-4':
@@ -103,24 +109,24 @@ export class ChatGPT extends LitElement {
   }
 
   async runChatReq() {
-    const engine = document.querySelector<ChatNav>('chat-nav').engine;
+    const engine = this.engine;
     const element = this.textareaEl;
     const prompt = element.value;
-    const includeContext = document.querySelector<ChatNav>('chat-nav').includeContext;
+    const includeContext = this.include_context;
     element.value = '';
-    this.addToHistory('user', prompt);
+    await this.addToHistory('user', prompt);
 
     const reqBody = {
       ...(includeContext
         ? {
             messages: [
-              { role: 'system', content: document.querySelector<ChatNav>('chat-nav').systemMessage },
+              { role: 'system', content: this.system_message },
               ...this.history.map((item) => ({ role: item.role, content: item.content }))
             ]
           }
         : {
             messages: [
-              { role: 'system', content: document.querySelector<ChatNav>('chat-nav').systemMessage },
+              { role: 'system', content: this.system_message },
               { role: 'user', content: prompt }
             ]
           }),
@@ -142,7 +148,6 @@ export class ChatGPT extends LitElement {
         this.loading = false;
         this.shadowRoot.querySelector('.history-outer').scrollTop = 0;
       }
-      this.writeToSessionStorage();
     } catch (err) {
       this.addToHistory('assistant', 'http error. try again');
     } finally {
@@ -154,7 +159,7 @@ export class ChatGPT extends LitElement {
     const element = this.textareaEl;
     const prompt = element.value;
     element.value = '';
-    const includeContext = document.querySelector<ChatNav>('chat-nav').includeContext;
+    const includeContext = this.include_context;
     this.addToHistory('user', prompt);
 
     const requestBody = {
@@ -175,7 +180,7 @@ export class ChatGPT extends LitElement {
     try {
       const response = await this.performPostRequest('/vertex', requestBody);
       const json = await response.json();
-      console.log('json', json);
+
       if (!json.content) {
         throw new Error('No content in response');
       }
@@ -187,6 +192,15 @@ export class ChatGPT extends LitElement {
     } finally {
       this.loading = false;
     }
+  }
+
+  async runAutoReq() {
+    // auto request first gets the prompt content
+    // it checks for the presence of an image
+    // it then posts to auto with either applicaton/json or multipart/form-data
+    // it also checks for includecontext
+    // it will then await the response
+    // the response is standardized to be some sort of content for the assistant messag
   }
 
   async runVisionReq() {
@@ -215,16 +229,8 @@ export class ChatGPT extends LitElement {
     }
   }
 
-  writeToSessionStorage() {
-    try {
-      sessionStorage.setItem('history', JSON.stringify(this.history));
-    } catch (err) {
-      console.log('error writing to session storage. probably full. clear history and try again', err);
-    }
-  }
-
   async runImageReq() {
-    const engine = document.querySelector<ChatNav>('chat-nav').engine;
+    const engine = this.engine;
     const element = this.textareaEl;
     const prompt = element.value;
     element.value = '';
@@ -276,33 +282,29 @@ export class ChatGPT extends LitElement {
       this.addToHistory('assistant', 'TTS error. Try again.');
     } finally {
       this.loading = false;
-      console.log('loading false');
     }
   }
 
-  addToHistory(role: 'user' | 'assistant', content: string, custom?: string) {
-    this.history = [...this.history, { role, content, ...(custom ? { custom: custom } : {}) }];
-    this.writeToSessionStorage();
+  async addToHistory(role: 'user' | 'assistant', content: string, custom?: string) {
+    const newChat = { role, content, ...(custom ? { custom: custom } : {}) };
+    await store.addMessage(newChat);
   }
 
   updateAssistantResponse(index: number, newContent: string) {
-    if (this.history[index]) {
-      this.history[index].content += newContent;
-      this.history = [...this.history];
-    }
+    store.addToMessageContent(newContent, index);
   }
-  deleteItem(item) {
-    this.history = this.history.filter((i) => i !== item);
-    this.writeToSessionStorage();
+  deleteItem(index: number) {
+    const reversedIndex = this.history.length - index - 1;
+    store.deleteChatHistoryItem(reversedIndex);
   }
   render() {
     return html`
       <div class="history-outer">
         ${loadingIcon(this.loading)}
         ${[...this.history].reverse().map(
-          (item) => html`
+          (item, i) => html`
             <p class="history ${item.role}">
-              <button class="delete" @click=${(e) => this.deleteItem(item)}>x</button>
+              <button class="delete" @click=${(e) => this.deleteItem(i)}>x</button>
               ${unsafeHTML(marked.parse(item.content))} ${item.custom ? unsafeHTML(item.custom as string) : nothing}
             </p>
           `

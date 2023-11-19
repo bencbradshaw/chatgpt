@@ -1,3 +1,4 @@
 .env
 chatgpt
 **-sk.json
+.DS_Store

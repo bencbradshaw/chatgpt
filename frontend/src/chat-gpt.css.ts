@@ -148,4 +148,29 @@ export const chatGptStyles = css`
   pre {
     margin-top: 0;
   }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 8px;
+  }
+
+  th {
+    font-weight: bold;
+    border-bottom: 1px solid white;
+  }
+
+  tr:last-child td {
+    border-bottom: 1px solid white;
+  }
+
+  tr:nth-child(even) {
+    background-color: #353d48;
+  }
 `;

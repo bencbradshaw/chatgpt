@@ -1,6 +1,7 @@
-import { css, html, LitElement } from 'lit';
-import { property } from 'lit/decorators.js';
+import { css, html, LitElement, nothing } from 'lit';
+import { property, state } from 'lit/decorators.js';
 import { store } from './store.js';
+import { Thread } from './types.js';
 
 export class ChatNav extends LitElement {
   static get styles() {
@@ -29,17 +30,32 @@ export class ChatNav extends LitElement {
   @property({ type: Boolean }) includeContext = JSON.parse(sessionStorage.getItem('include_context')) ?? true;
   @property({ type: String })
   systemMessage = sessionStorage.getItem('system_message') ?? `Your name is ChatGPT. You are a helpful assistant.`;
+  @state() thread: Thread;
+  @state() activeThreadId: IDBValidKey;
+  sub1: { unsubscribe: () => void };
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.sub1 = store.subscribe<Thread>('activeThread', (thread) => {
+      this.thread = thread;
+      this.requestUpdate();
+    });
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.sub1.unsubscribe();
+  }
   render() {
+    if (!this.thread) return nothing;
     return html`
       <nav>
         <div>
           <select
             id="engine"
-            .value=${this.engine}
+            .value=${this.thread.selected_engine}
             @change=${(e) => {
-              this.engine = e.target.value;
-              sessionStorage.setItem('engine', this.engine);
-              document.querySelector('chat-gpt').engine = this.engine;
+              store.updateThread({ selected_engine: e.target.value });
             }}>
             <option value="gpt-4-1106-preview">GPT 4 Turbo</option>
             <option value="gpt-4">GPT 4</option>
@@ -55,19 +71,17 @@ export class ChatNav extends LitElement {
           <input
             type="text"
             placeholder="System Message"
-            .value=${this.systemMessage}
+            .value=${this.thread.system_message}
             style="width: 300px;"
             @input=${(e) => {
-              this.systemMessage = e.target.value;
-              sessionStorage.setItem('system_message', this.systemMessage);
+              store.updateThread({ system_message: e.target.value });
             }} />
           <input
             type="checkbox"
             name="include-context"
-            .checked=${this.includeContext}
+            .checked=${this.thread.include_context}
             @change=${(e) => {
-              this.includeContext = e.target.checked;
-              sessionStorage.setItem('include_context', this.includeContext);
+              store.updateThread({ include_context: e.target.checked });
             }} />
           <span>Include History</span>
 

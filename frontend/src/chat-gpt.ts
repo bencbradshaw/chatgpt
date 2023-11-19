@@ -4,11 +4,10 @@ import { customElement, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked } from 'marked';
 import { chatGptStyles } from './chat-gpt.css.js';
-import { ChatNav } from './chat-nav.js';
 import { githubDarkDimmed } from './github-dark-dimmed.css.js';
 import { loadingIcon } from './loading-icon.js';
 import { store } from './store.js';
-import { ChatHistory, Thread } from './types.js';
+import { ChatHistory, Engine, Thread } from './types.js';
 const renderer = {
   image(href = '', title = 'image', text = 'image') {
     return `
@@ -49,12 +48,15 @@ export class ChatGPT extends LitElement {
   @state() loading = false;
   @state() history: ChatHistory = [];
   @state() miniPreviewImageURL = '';
-  @state() engine =
-    sessionStorage.getItem('engine') ?? document.querySelector<ChatNav>('chat-nav').engine ?? 'gpt-4-1106-preview';
+  @state() system_message: string;
+  @state() engine: Engine;
+  @state() include_context: boolean;
   connectedCallback() {
     super.connectedCallback();
     store.subscribe<Thread>('activeThread', (thread) => {
       this.history = thread.history;
+      this.engine = thread.selected_engine;
+      this.include_context = thread.include_context;
       this.requestUpdate();
     });
   }
@@ -80,7 +82,7 @@ export class ChatGPT extends LitElement {
   }
 
   async submit(e: Event) {
-    const engine = document.querySelector<ChatNav>('chat-nav').engine;
+    const engine = this.engine;
     switch (engine) {
       case 'gpt-4-1106-preview':
       case 'gpt-4':
@@ -107,10 +109,10 @@ export class ChatGPT extends LitElement {
   }
 
   async runChatReq() {
-    const engine = document.querySelector<ChatNav>('chat-nav').engine;
+    const engine = this.engine;
     const element = this.textareaEl;
     const prompt = element.value;
-    const includeContext = document.querySelector<ChatNav>('chat-nav').includeContext;
+    const includeContext = this.include_context;
     element.value = '';
     await this.addToHistory('user', prompt);
 
@@ -118,13 +120,13 @@ export class ChatGPT extends LitElement {
       ...(includeContext
         ? {
             messages: [
-              { role: 'system', content: document.querySelector<ChatNav>('chat-nav').systemMessage },
+              { role: 'system', content: this.system_message },
               ...this.history.map((item) => ({ role: item.role, content: item.content }))
             ]
           }
         : {
             messages: [
-              { role: 'system', content: document.querySelector<ChatNav>('chat-nav').systemMessage },
+              { role: 'system', content: this.system_message },
               { role: 'user', content: prompt }
             ]
           }),
@@ -157,7 +159,7 @@ export class ChatGPT extends LitElement {
     const element = this.textareaEl;
     const prompt = element.value;
     element.value = '';
-    const includeContext = document.querySelector<ChatNav>('chat-nav').includeContext;
+    const includeContext = this.include_context;
     this.addToHistory('user', prompt);
 
     const requestBody = {
@@ -228,7 +230,7 @@ export class ChatGPT extends LitElement {
   }
 
   async runImageReq() {
-    const engine = document.querySelector<ChatNav>('chat-nav').engine;
+    const engine = this.engine;
     const element = this.textareaEl;
     const prompt = element.value;
     element.value = '';

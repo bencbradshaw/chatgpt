@@ -15,7 +15,7 @@ go mod download
 ## start backend
 
 ```bash
-$ go run main.go
+$ go run chatgpt.go
 ```
 
 ## install frontend dependencies

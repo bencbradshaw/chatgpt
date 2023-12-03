@@ -262,7 +262,7 @@ export class ChatGPT extends LitElement {
     const requestBody = {
       model: 'tts-1',
       input: prompt,
-      voice: 'nova'
+      voice: 'onyx'
     };
 
     try {

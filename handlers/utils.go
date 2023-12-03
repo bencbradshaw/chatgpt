@@ -100,6 +100,7 @@ func processChatStream(openAIStream io.Reader, w http.ResponseWriter) {
 			}
 			if f, ok := w.(http.Flusher); ok {
 				f.Flush()
+				log.Println("Wrote chunk")
 			} else {
 				log.Println("Unable to convert http.ResponseWriter to http.Flusher")
 				break
@@ -129,8 +130,20 @@ func downloadAndSaveImage(imageUrl string, w http.ResponseWriter) {
 	defer resp.Body.Close()
 
 	t := time.Now()
-	filename := fmt.Sprintf("./frontend/src/assets/dall-e/dall-e_%s.png", t.Format("20060102_150405"))
-	out, err := os.Create(filename)
+	// Define the directory where the image will be saved
+	imageDir := "./frontend/src/assets/dall-e/"
+	// Define the filename based on the current timestamp
+	filename := fmt.Sprintf("dall-e_%s.png", t.Format("20060102_150405"))
+	// Combine the directory and filename
+	filepath := imageDir + filename
+
+	// Check if the directory exists and create it if necessary
+	err = os.MkdirAll(imageDir, os.ModePerm)
+	if err != nil {
+		respondWithError(w, "Error creating directory: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	out, err := os.Create(filepath)
 	if err != nil {
 		respondWithError(w, "Error creating image file: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -141,8 +154,9 @@ func downloadAndSaveImage(imageUrl string, w http.ResponseWriter) {
 		respondWithError(w, "Error saving image: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	respondWithJSON(w, map[string]string{"url": strings.Replace(filename, "./frontend", "", 1)})
+	// Update the URL in the JSON response if needed to match the frontend structure
+	imageUrlForResponse := strings.Replace(filepath, "./frontend", "", 1)
+	respondWithJSON(w, map[string]string{"url": imageUrlForResponse})
 }
 
 func stringifyRequest(r *http.Request) (string, error) {

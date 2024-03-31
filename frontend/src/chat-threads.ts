@@ -19,7 +19,6 @@ export class ChatThreads extends LitElement {
     }
     .thread {
       box-sizing: border-box;
-      color: white;
       border: 1px solid transparent;
       margin: 1rem 0;
       padding: 0.25rem;

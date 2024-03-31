@@ -8,7 +8,7 @@ export class ChatNav extends LitElement {
     return css`
       /* Your styles here */
       :host {
-        height: 25px;
+        height: auto;
       }
       button {
         margin: 0 10px;
@@ -17,6 +17,7 @@ export class ChatNav extends LitElement {
         outline: none;
         border: none;
         padding: 0.25rem 1rem;
+        color: var(--primary-font-color);
       }
       button:hover {
         background-color: var(--button-bg-color-hover);
@@ -68,7 +69,7 @@ export class ChatNav extends LitElement {
             <option value="auto">Auto Engine</option>
           </select>
 
-          <input
+          <textarea
             type="text"
             placeholder="System Message"
             .value=${this.thread.system_message}
@@ -76,6 +77,7 @@ export class ChatNav extends LitElement {
             @input=${(e) => {
               store.updateThread({ system_message: e.target.value });
             }} />
+            </textarea>
           <input
             type="checkbox"
             name="include-context"
@@ -91,6 +93,7 @@ export class ChatNav extends LitElement {
             }}>
             Delete Thread
           </button>
+          <theme-toggle style="display: inline"></theme-toggle>
         </div>
       </nav>
     `;

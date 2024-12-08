@@ -42,8 +42,6 @@ func main() {
 			handlers.HandleVertexRequest(res, req)
 		case "/tts":
 			handlers.HandleTtsRequest(res, req)
-		case "/auto":
-			handlers.HandleAuto(res, req)
 		default:
 			http.NotFound(res, req)
 		}

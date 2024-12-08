@@ -76,14 +76,6 @@ export class ChatNav extends LitElement {
               store.updateThread({ system_message: e.target.value });
             }} />
             </textarea>
-          <input
-            type="checkbox"
-            name="include-context"
-            .checked=${this.thread.include_context}
-            @change=${(e) => {
-              store.updateThread({ include_context: e.target.checked });
-            }} />
-          <span>Include History</span>
 
           <button
             @click=${(e) => {

@@ -20,7 +20,7 @@ class Store extends EventTarget {
         id: 0,
         headline: 'default',
         system_message: 'This is the default thread',
-        selected_engine: 'gpt-4-1106-preview' as Engine,
+        selected_engine: 'gpt-4o-mini' as Engine,
         include_context: true,
         history: []
       };
@@ -101,7 +101,7 @@ class Store extends EventTarget {
       headline: 'thread',
       system_message: '',
       history: [],
-      selected_engine: 'gpt-4-1106-preview' as Engine,
+      selected_engine: 'gpt-4o-mini' as Engine,
       include_context: true
     };
     this.activeThreadId = await this.db.add('threads', thread);

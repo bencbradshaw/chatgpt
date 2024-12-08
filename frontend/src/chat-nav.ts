@@ -27,7 +27,7 @@ export class ChatNav extends LitElement {
       }
     `;
   }
-  @property({ type: String }) engine = sessionStorage.getItem('engine') ?? 'gpt-4-1106-preview';
+  @property({ type: String }) engine = sessionStorage.getItem('engine') ?? 'gpt-4o-mini';
   @property({ type: Boolean }) includeContext = JSON.parse(sessionStorage.getItem('include_context')) ?? true;
   @property({ type: String })
   systemMessage = sessionStorage.getItem('system_message') ?? `Your name is ChatGPT. You are a helpful assistant.`;
@@ -58,15 +58,10 @@ export class ChatNav extends LitElement {
             @change=${(e) => {
               store.updateThread({ selected_engine: e.target.value });
             }}>
-            <option value="gpt-4-1106-preview">GPT 4 Turbo</option>
-            <option value="gpt-4">GPT 4</option>
-            <option value="gpt-4-vision-preview">GPT 4 Vision</option>
-            <option value="gpt-3.5-turbo">GPT 3.5 Turbo</option>
+            <option value="gpt-4o-mini">4o mini</option>
+            <option value="gpt-4o">4o</option>
             <option value="dall-e-3">DALL-E 3</option>
-            <option value="dall-e-2">DALL-E 2</option>
-            <option value="tts-1">TTS 1</option>
             <option value="vertex">Vertex Code Bison</option>
-            <option value="auto">Auto Engine</option>
           </select>
 
           <textarea

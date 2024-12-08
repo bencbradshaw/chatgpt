@@ -5,16 +5,7 @@ export interface ChatHistoryItem {
 }
 export type ChatHistory = ChatHistoryItem[];
 
-export type Engine =
-  | 'gpt-4-1106-preview'
-  | 'gpt-4'
-  | 'gpt-4-vision-preview'
-  | 'gpt-3.5-turbo'
-  | 'dall-e-3'
-  | 'dall-e-2'
-  | 'tts-1'
-  | 'vertex'
-  | 'auto';
+export type Engine = 'gpt-4o-mini-2024-07-18' | 'gpt-4o-mini' | 'gpt-4o' | 'dall-e-3' | 'tts-1' | 'vertex' | 'auto';
 export interface Thread {
   id?: IDBValidKey;
   headline: string;

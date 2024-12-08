@@ -84,17 +84,13 @@ export class ChatGPT extends LitElement {
   async submit(e: Event) {
     const engine = this.engine;
     switch (engine) {
-      case 'gpt-4-1106-preview':
-      case 'gpt-4':
-      case 'gpt-3.5-turbo':
+      case 'gpt-4o':
+      case 'gpt-4o-mini':
+      case 'gpt-4o-mini-2024-07-18':
         await this.runChatReq();
         break;
-      case 'dall-e-2':
       case 'dall-e-3':
         await this.runImageReq();
-        break;
-      case 'gpt-4-vision-preview':
-        await this.runVisionReq();
         break;
       case 'tts-1':
         await this.runTtsReq();

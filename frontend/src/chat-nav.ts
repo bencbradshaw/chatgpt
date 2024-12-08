@@ -60,6 +60,9 @@ export class ChatNav extends LitElement {
             }}>
             <option value="gpt-4o-mini">4o mini</option>
             <option value="gpt-4o">4o</option>
+            <option value="gpt-4-turbo">4 turbo</option>
+            <option value="gpt-4">4</option>
+            <option value="gpt-3.5-turbo">3.5 turbo</option>
             <option value="dall-e-3">DALL-E 3</option>
             <option value="vertex">Vertex Code Bison</option>
           </select>

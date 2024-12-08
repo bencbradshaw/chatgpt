@@ -2,25 +2,27 @@ import hljs from 'highlight.js';
 import { css, html, LitElement, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { marked } from 'marked';
+import { marked, Renderer, Tokens } from 'marked';
 import { chatGptStyles } from './chat-gpt.css.js';
 import { githubDarkDimmed } from './github-dark-dimmed.css.js';
 import { loadingIcon } from './loading-icon.js';
 import { store } from './store.js';
 import { ChatHistory, Engine, Thread } from './types.js';
-const renderer = {
-  image(href = '', title = 'image', text = 'image') {
-    return `
-      <div style="display: flex;">
-        <img src="${href}" alt="${text}" title="${title}" />
-      </div>
-    `;
-  },
-  code(code, language) {
-    const validLang = !!(language && hljs.getLanguage(language));
-    const highlighted = validLang ? hljs.highlight(code, { language }).value : code;
-    //const highlight2 = highlighted.replaceAll(/&lt;/g, '<').replaceAll(/&gt;/g, '>');
-    return `
+
+const renderer = new Renderer();
+
+renderer.image = function ({ href = '', title = 'image', text = 'image' }: Tokens.Image): string {
+  return `
+    <div style="display: flex;">
+      <img src="${href}" alt="${text}" title="${title}" />
+    </div>
+  `;
+};
+
+renderer.code = function ({ text, lang }: Tokens.Code): string {
+  const validLang = !!(lang && hljs.getLanguage(lang));
+  const highlighted = validLang ? hljs.highlight(text, { language: lang }).value : text;
+  return `
     <div class="button-copy-container">
       <button class="copy" 
         onclick="(function() { 
@@ -32,11 +34,11 @@ const renderer = {
         }).call(this)">
         Copy
       </button>
-      </div>
-    <pre><code class="hljs ${language}">${highlighted}</code></pre>
-    `;
-  }
+    </div>
+    <pre><code class="hljs ${lang}">${highlighted}</code></pre>
+  `;
 };
+
 marked.use({ renderer });
 @customElement('chat-gpt')
 export class ChatGPT extends LitElement {
@@ -301,7 +303,8 @@ export class ChatGPT extends LitElement {
           (item, i) => html`
             <p class="history ${item.role}">
               <button class="delete" @click=${(e) => this.deleteItem(i)}>x</button>
-              ${unsafeHTML(marked.parse(item.content))} ${item.custom ? unsafeHTML(item.custom as string) : nothing}
+              ${unsafeHTML(marked.parse(item.content) as string)}
+              ${item.custom ? unsafeHTML(item.custom as string) : nothing}
             </p>
           `
         )}
@@ -309,7 +312,6 @@ export class ChatGPT extends LitElement {
       <div class="inputs-outer">
         <div class="inputs-inner">
           <textarea
-            ?disabled=${this.engine === 'gpt-4-vision-preview'}
             title="Enter to send. Shift+Enter for new line."
             @keydown=${(e) => {
               if (e.key === 'Enter' && e.shiftKey) return;

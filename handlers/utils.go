@@ -100,7 +100,7 @@ func processChatStream(openAIStream io.Reader, w http.ResponseWriter) {
 			}
 			if f, ok := w.(http.Flusher); ok {
 				f.Flush()
-				log.Println("Wrote chunk")
+				log.Printf("Wrote chunk of %d bytes", len(content))
 			} else {
 				log.Println("Unable to convert http.ResponseWriter to http.Flusher")
 				break

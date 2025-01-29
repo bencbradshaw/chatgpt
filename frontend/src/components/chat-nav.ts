@@ -1,11 +1,11 @@
 import { css, html, LitElement, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { store } from '../state/store.js';
+import type { Store } from '../state/store.js';
 import { Thread } from '../types.js';
+import { consume, createContext } from '@lit/context';
 
 export class ChatNav extends LitElement {
   static styles = css`
-    /* Your styles here */
     :host {
       height: auto;
     }
@@ -13,7 +13,7 @@ export class ChatNav extends LitElement {
       div {
         display: flex;
         align-items: center;
-        justify-content: space-around;
+        justify-content: center;
         textarea {
           margin: 0 5px;
         }
@@ -43,10 +43,10 @@ export class ChatNav extends LitElement {
   @state() thread: Thread;
   @state() activeThreadId: IDBValidKey;
   sub1: { unsubscribe: () => void };
-
+  @consume({ context: createContext<Store>('chat-store') }) store: Store;
   connectedCallback() {
     super.connectedCallback();
-    this.sub1 = store.subscribe<Thread>('activeThread', (thread) => {
+    this.sub1 = this.store.subscribe<Thread>('activeThread', (thread) => {
       this.thread = thread;
       this.requestUpdate();
     });
@@ -65,7 +65,7 @@ export class ChatNav extends LitElement {
             id="engine"
             .value=${this.thread.selected_engine}
             @change=${(e) => {
-              store.updateThread({ selected_engine: e.target.value });
+              this.store.updateThread({ selected_engine: e.target.value });
             }}>
             <option value="gpt-4o-mini">4o mini</option>
             <option value="gpt-4o">4o</option>
@@ -82,13 +82,13 @@ export class ChatNav extends LitElement {
             .value=${this.thread.system_message}
             style="width: 300px; height: 16px;"
             @input=${(e) => {
-              store.updateThread({ system_message: e.target.value });
+              this.store.updateThread({ system_message: e.target.value });
             }} />
             </textarea>
 
           <button
             @click=${(e) => {
-              store.deleteThread();
+              this.store.deleteThread();
             }}>
             Delete Thread
           </button>

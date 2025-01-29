@@ -1,6 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
-  import('./components/chat-gpt.js');
-  import('./components/chat-nav.js');
-  import('./components/chat-threads.js');
-  import('./components/theme-toggle.js');
-});
+await import('./components/chat-provider.js');
+import('./components/chat-history.js');
+import('./components/chat-nav.js');
+import('./components/chat-threads.js');

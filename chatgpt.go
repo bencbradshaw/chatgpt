@@ -8,11 +8,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const (
-	accessControlAllow   = "Access-Control-Allow-Origin"
-	accessControlHeaders = "Access-Control-Allow-Headers"
-)
-
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
@@ -24,9 +19,9 @@ func main() {
 		log.Println("Handling request:", req.URL.Path)
 		log.Println("Request method:", req.Method)
 		log.Println("Request Content-Type:", req.Header.Get("Content-Type"))
-		res.Header().Set(accessControlAllow, "*")
+		res.Header().Set("Access-Control-Allow-Origin", "*")
 		res.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		res.Header().Set(accessControlHeaders, "Accept, Content-Type")
+		res.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type")
 		if req.Method == http.MethodOptions {
 			res.WriteHeader(http.StatusOK)
 			return

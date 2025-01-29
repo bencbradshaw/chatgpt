@@ -1,14 +1,15 @@
-import type { ChatHistory, Engine, Thread } from '../types.js';
+import type { IChatHistory, Engine, Thread } from '../types.js';
 
 import hljs from 'highlight.js';
 import { html, LitElement, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked, Renderer, Tokens } from 'marked';
-import { chatGptStyles } from './chat-gpt.css.js';
+import { chatGptStyles } from './chat-history.css.js';
 import { githubDarkDimmed } from '../styles/github-dark-dimmed.css.js';
 import { loadingIcon } from '../atomics/loading-icon.js';
-import { store } from '../state/store.js';
+import { consume, createContext } from '@lit/context';
+import type { Store } from '../state/store.js';
 
 const renderer = new Renderer();
 
@@ -41,19 +42,20 @@ renderer.code = function ({ text, lang }: Tokens.Code): string {
 };
 
 marked.use({ renderer });
-@customElement('chat-gpt')
-export class ChatGPT extends LitElement {
+@customElement('chat-history')
+export class ChatHistory extends LitElement {
   static styles = [githubDarkDimmed, chatGptStyles];
   @query('textarea') textareaEl: HTMLTextAreaElement;
   @state() loading = false;
-  @state() history: ChatHistory = [];
+  @state() history: IChatHistory = [];
   @state() miniPreviewImageURL = '';
   @state() system_message: string;
   @state() engine: Engine;
   @state() include_context: boolean;
+  @consume({ context: createContext<Store>('chat-store') }) store: Store;
   connectedCallback() {
     super.connectedCallback();
-    store.subscribe<Thread>('activeThread', (thread) => {
+    this.store.subscribe<Thread>('activeThread', (thread) => {
       this.history = thread.history;
       this.engine = thread.selected_engine;
       this.include_context = thread.include_context;
@@ -282,15 +284,15 @@ export class ChatGPT extends LitElement {
 
   async addToHistory(role: 'user' | 'assistant', content: string, custom?: string) {
     const newChat = { role, content, ...(custom ? { custom: custom } : {}) };
-    await store.addMessage(newChat);
+    await this.store.addMessage(newChat);
   }
 
   updateAssistantResponse(index: number, newContent: string) {
-    store.addToMessageContent(newContent, index);
+    this.store.addToMessageContent(newContent, index);
   }
   deleteItem(index: number) {
     const reversedIndex = this.history.length - index - 1;
-    store.deleteChatHistoryItem(reversedIndex);
+    this.store.deleteChatHistoryItem(reversedIndex);
   }
   render() {
     return html`
@@ -351,6 +353,6 @@ export class ChatGPT extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'chat-gpt': ChatGPT;
+    'chat-history': ChatHistory;
   }
 }

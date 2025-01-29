@@ -1,7 +1,7 @@
 import { IDB } from './idb.js';
 import { ChatHistoryItem, Engine, Thread } from '../types.js';
 
-class Store extends EventTarget {
+export class Store extends EventTarget {
   private db: IDB = new IDB();
   private activeThreadId: IDBValidKey;
   private activeThread: Thread;
@@ -146,5 +146,3 @@ class Store extends EventTarget {
     };
   }
 }
-
-export const store = new Store();

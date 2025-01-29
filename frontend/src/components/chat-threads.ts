@@ -1,7 +1,10 @@
+import type { Store } from '../state/store.js';
 import { css, html, LitElement, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { store } from '../state/store.js';
 import { Thread } from '../types.js';
+import '../atomics/theme-toggle.js';
+import { consume, createContext } from '@lit/context';
+
 @customElement('chat-threads')
 export class ChatThreads extends LitElement {
   static styles = css`
@@ -35,14 +38,14 @@ export class ChatThreads extends LitElement {
   @state() activeThreadId: IDBValidKey;
   sub1: { unsubscribe: () => void };
   sub2: { unsubscribe: () => void };
-
+  @consume({ context: createContext<Store>('chat-store') }) store: Store;
   connectedCallback() {
     super.connectedCallback();
-    this.sub1 = store.subscribe<Thread[]>('threads', (threads) => {
+    this.sub1 = this.store.subscribe<Thread[]>('threads', (threads) => {
       this.threads = threads;
       this.requestUpdate();
     });
-    this.sub2 = store.subscribe<number>('activeThreadId', (idx) => {
+    this.sub2 = this.store.subscribe<number>('activeThreadId', (idx) => {
       this.activeThreadId = idx;
     });
   }
@@ -61,12 +64,12 @@ export class ChatThreads extends LitElement {
           return html`
             <div
               class="thread ${this.activeThreadId === thread.id ? 'active' : ''}"
-              @click=${() => store.selectThread(thread.id)}>
+              @click=${() => this.store.selectThread(thread.id)}>
               ${thread.headline.slice(0, 10) + '...'}
             </div>
           `;
         })}
-        <div class="thread" @click=${() => store.createNewThread()}>+ new thread</div>
+        <div class="thread" @click=${() => this.store.createNewThread()}>+ new thread</div>
       </section>
     `;
   }

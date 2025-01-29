@@ -3,7 +3,7 @@ export interface ChatHistoryItem {
   content: string;
   custom?: string;
 }
-export type ChatHistory = ChatHistoryItem[];
+export type IChatHistory = ChatHistoryItem[];
 
 export type Engine =
   | 'gpt-4o-mini'
@@ -21,5 +21,5 @@ export interface Thread {
   system_message: string;
   selected_engine: Engine;
   include_context: boolean;
-  history: ChatHistory;
+  history: IChatHistory;
 }

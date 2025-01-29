@@ -17,7 +17,8 @@
     "noFallthroughCasesInSwitch": true,
     "strictNullChecks": false,
     "noImplicitAny": false,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "rootDir": "./src"
   },
   "include": ["src"]
 }

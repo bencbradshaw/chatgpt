@@ -4,29 +4,38 @@ import { store } from './store.js';
 import { Thread } from './types.js';
 
 export class ChatNav extends LitElement {
-  static get styles() {
-    return css`
-      /* Your styles here */
-      :host {
-        height: auto;
+  static styles = css`
+    /* Your styles here */
+    :host {
+      height: auto;
+    }
+    nav {
+      div {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        textarea {
+          margin: 0 5px;
+        }
       }
-      button {
-        margin: 0 10px;
-        cursor: pointer;
-        background-color: var(--button-bg-color);
-        outline: none;
-        border: none;
-        padding: 0.25rem 1rem;
-        color: var(--primary-font-color);
-      }
-      button:hover {
-        background-color: var(--button-bg-color-hover);
-      }
-      button:active {
-        background-color: var(--button-bg-color);
-      }
-    `;
-  }
+    }
+    button {
+      margin: 0 10px;
+      cursor: pointer;
+      background-color: var(--button-bg-color);
+      outline: none;
+      border: none;
+      padding: 0.25rem 1rem;
+      color: var(--primary-font-color);
+    }
+    button:hover {
+      background-color: var(--button-bg-color-hover);
+    }
+    button:active {
+      background-color: var(--button-bg-color);
+    }
+  `;
+
   @property({ type: String }) engine = sessionStorage.getItem('engine') ?? 'gpt-4o-mini';
   @property({ type: Boolean }) includeContext = JSON.parse(sessionStorage.getItem('include_context')) ?? true;
   @property({ type: String })
@@ -71,7 +80,7 @@ export class ChatNav extends LitElement {
             type="text"
             placeholder="System Message"
             .value=${this.thread.system_message}
-            style="width: 300px;"
+            style="width: 300px; height: 16px;"
             @input=${(e) => {
               store.updateThread({ system_message: e.target.value });
             }} />

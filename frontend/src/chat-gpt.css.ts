@@ -14,8 +14,8 @@ export const chatGptStyles = css`
     flex-direction: column-reverse;
     align-items: center;
     justify-content: flex-start;
-    height: calc(80vh - 25px);
-    max-height: calc(80vh - 25px);
+    height: calc(80vh - 50px);
+    max-height: calc(80vh - 50px);
     overflow-y: auto;
     max-width: 100%;
     padding: 0 5%;

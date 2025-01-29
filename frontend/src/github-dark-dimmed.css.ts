@@ -1,5 +1,8 @@
 import { css } from 'lit';
 export const githubDarkDimmed = css`
+  .hljs {
+    color: white;
+  }
   pre code.hljs {
     display: block;
     overflow-x: auto;

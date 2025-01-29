@@ -42,10 +42,7 @@ renderer.code = function ({ text, lang }: Tokens.Code): string {
 marked.use({ renderer });
 @customElement('chat-gpt')
 export class ChatGPT extends LitElement {
-  static styles = css`
-    ${githubDarkDimmed}
-    ${chatGptStyles}
-  `;
+  static styles = [githubDarkDimmed, chatGptStyles];
   @query('textarea') textareaEl: HTMLTextAreaElement;
   @state() loading = false;
   @state() history: ChatHistory = [];

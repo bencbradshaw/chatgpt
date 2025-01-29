@@ -7,6 +7,7 @@ export type ChatHistory = ChatHistoryItem[];
 
 export type Engine =
   | 'gpt-4o-mini'
+  | 'gpt-4o-mini-2024-07-18'
   | 'gpt-4o'
   | 'gpt-4-turbo'
   | 'gpt-4'

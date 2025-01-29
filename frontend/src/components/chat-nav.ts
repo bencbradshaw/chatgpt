@@ -1,7 +1,7 @@
 import { css, html, LitElement, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { store } from './store.js';
-import { Thread } from './types.js';
+import { store } from '../state/store.js';
+import { Thread } from '../types.js';
 
 export class ChatNav extends LitElement {
   static styles = css`

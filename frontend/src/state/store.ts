@@ -1,5 +1,5 @@
 import { IDB } from './idb.js';
-import { ChatHistoryItem, Engine, Thread } from './types.js';
+import { ChatHistoryItem, Engine, Thread } from '../types.js';
 
 class Store extends EventTarget {
   private db: IDB = new IDB();

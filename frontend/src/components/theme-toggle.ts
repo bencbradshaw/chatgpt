@@ -23,7 +23,6 @@ export class ThemeToggle extends LitElement {
     }
   `;
 
-  // Define light theme CSS variables
   lightThemeVars = {
     '--primary-font-color': '#000000',
     '--primary-bg-color': '#ffffff',
@@ -34,7 +33,6 @@ export class ThemeToggle extends LitElement {
     'background-color': '#ffffff'
   };
 
-  // Define dark theme CSS variables (same as current for demonstration)
   darkThemeVars = {
     '--primary-font-color': '#ffffff',
     '--primary-bg-color': '#282c34',
@@ -44,17 +42,13 @@ export class ThemeToggle extends LitElement {
     '--color': 'rgba(255, 255, 255, 0.87)',
     'background-color': '#282c34'
   };
-
-  // Property to track theme state
   @property() isDarkTheme = true;
 
   toggleTheme() {
-    // Swap the theme variables
     const newThemeVars = this.isDarkTheme ? this.lightThemeVars : this.darkThemeVars;
     for (const [key, value] of Object.entries(newThemeVars)) {
       document.documentElement.style.setProperty(key, value);
     }
-    // Update the theme state
     this.isDarkTheme = !this.isDarkTheme;
   }
 

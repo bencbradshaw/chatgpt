@@ -1,13 +1,14 @@
+import type { ChatHistory, Engine, Thread } from '../types.js';
+
 import hljs from 'highlight.js';
-import { css, html, LitElement, nothing } from 'lit';
+import { html, LitElement, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked, Renderer, Tokens } from 'marked';
 import { chatGptStyles } from './chat-gpt.css.js';
-import { githubDarkDimmed } from './github-dark-dimmed.css.js';
-import { loadingIcon } from './loading-icon.js';
-import { store } from './store.js';
-import { ChatHistory, Engine, Thread } from './types.js';
+import { githubDarkDimmed } from '../styles/github-dark-dimmed.css.js';
+import { loadingIcon } from '../atomics/loading-icon.js';
+import { store } from '../state/store.js';
 
 const renderer = new Renderer();
 
@@ -85,7 +86,6 @@ export class ChatGPT extends LitElement {
     switch (engine) {
       case 'gpt-4o':
       case 'gpt-4o-mini':
-      case 'gpt-4o-mini-2024-07-18':
         await this.runChatReq();
         break;
       case 'dall-e-3':

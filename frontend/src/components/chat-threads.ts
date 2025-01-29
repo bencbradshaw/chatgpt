@@ -1,7 +1,7 @@
 import { css, html, LitElement, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { store } from './store.js';
-import { Thread } from './types.js';
+import { store } from '../state/store.js';
+import { Thread } from '../types.js';
 @customElement('chat-threads')
 export class ChatThreads extends LitElement {
   static styles = css`

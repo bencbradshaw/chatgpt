@@ -12,8 +12,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -49,13 +47,6 @@ func doPostRequest(url string, body interface{}, auth interface{}) (*http.Respon
 	case string:
 		// If the auth is a string, use it directly as a bearer token.
 		req.Header.Set("Authorization", fmt.Sprintf(authHeaderFmt, v))
-	case oauth2.TokenSource:
-		// If the auth is a TokenSource, get a token and apply it.
-		token, err := v.Token()
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Authorization", fmt.Sprintf(authHeaderFmt, token.AccessToken))
 	default:
 		// If none of the types match, return an error.
 		return nil, fmt.Errorf("unsupported authorization type %T", auth)

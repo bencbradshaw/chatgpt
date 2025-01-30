@@ -25,7 +25,6 @@ func main() {
 	})
 	mux.Handle("/image", cors(handlers.HandleImageRequest))
 	mux.Handle("/vision", cors(handlers.HandleVisionRequest))
-	mux.Handle("/vertex", cors(handlers.HandleVertexRequest))
 	mux.Handle("/tts", cors(handlers.HandleTtsRequest))
 	mux.Handle("/chat", cors(handlers.HandleChatRequest))
 	http.ListenAndServe(":2025", mux)

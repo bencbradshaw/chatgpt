@@ -12,21 +12,23 @@ OPEN_AI_SK=your_open_ai_sk
 go mod download
 ```
 
-## start backend
-
-```bash
-$ go run chatgpt.go
-```
-
 ## install frontend dependencies
 
 ```bash
-$ cd frontend
-$ npm install
+cd frontend
+npm install
 ```
 
-## start the frontend
+## start in devmode
 
 ```bash
-$ npm run dev
+make
 ```
+
+## build
+
+```bash
+make build
+```
+
+- note that the /static dir is not included into the executable, so if placing the executable somewhere, like a server, the static dir needs to be copied over with it, and placed in the same dir as the executable.

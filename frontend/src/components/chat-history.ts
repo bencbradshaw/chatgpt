@@ -75,7 +75,7 @@ export class ChatHistory extends LitElement {
         Accept: endpoint === '/' ? 'text/event-stream' : 'application/json'
       };
     }
-    const response = await fetch(`http://localhost:8081${endpoint}`, {
+    const response = await fetch(`${endpoint}`, {
       method: 'POST',
       headers,
       body: body instanceof FormData ? body : JSON.stringify(body)
@@ -130,7 +130,7 @@ export class ChatHistory extends LitElement {
       engine: engine
     };
     try {
-      const response = await this.performPostRequest('/', reqBody);
+      const response = await this.performPostRequest('/chat', reqBody);
 
       const reader = response.body.getReader();
       let message = '';

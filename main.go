@@ -27,7 +27,7 @@ func main() {
 	mux.Handle("/vision", cors(handlers.HandleVisionRequest))
 	mux.Handle("/tts", cors(handlers.HandleTtsRequest))
 	mux.Handle("/chat", cors(handlers.HandleChatRequest))
-	print("Server started at :2025")
+	print("Server started at http://localhost:2025 \n")
 	http.ListenAndServe(":2025", mux)
 }
 

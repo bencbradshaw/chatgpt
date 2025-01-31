@@ -3,30 +3,31 @@ package main
 import (
 	"chatgpt/handlers"
 	"framework"
-	"log"
 	"net/http"
+	"os"
 
 	"github.com/evanw/esbuild/pkg/api"
-	"github.com/joho/godotenv"
 )
 
-func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
-	}
+var params = framework.InitParams{
+	EsbuildOpts: api.BuildOptions{
+		EntryPoints: []string{"./frontend/src/index.ts"},
+	},
+	AutoRegisterTemplateRoutes: true,
 }
 
 func main() {
-	mux := framework.Init(framework.InitParams{
-		EsbuildOpts: api.BuildOptions{
-			EntryPoints: []string{"./frontend/src/index.ts"},
-		},
-		AutoRegisterTemplateRoutes: true,
-	})
+	if os.Getenv("BUILD") == "true" {
+		framework.Build(params)
+		print("Build complete \n")
+		return
+	}
+	mux := framework.Run(params)
 	mux.Handle("/image", cors(handlers.HandleImageRequest))
 	mux.Handle("/vision", cors(handlers.HandleVisionRequest))
 	mux.Handle("/tts", cors(handlers.HandleTtsRequest))
 	mux.Handle("/chat", cors(handlers.HandleChatRequest))
+	print("Server started at :2025")
 	http.ListenAndServe(":2025", mux)
 }
 

@@ -20,12 +20,14 @@ export class ChatNav extends LitElement {
       }
     }
     button {
-      margin: 0 10px;
-      cursor: pointer;
-      background-color: var(--button-bg-color);
       outline: none;
+      color: var(--primary-font-color);
+      cursor: pointer;
+      padding: 0.5rem;
+      margin: 0 10px;
       border: none;
-      padding: 0.25rem 1rem;
+      border-radius: 5px;
+      background-color: var(--button-bg-color);
       color: var(--primary-font-color);
     }
     button:hover {

@@ -10,8 +10,8 @@ export class ThemeToggle extends LitElement {
 
     .toggle-btn {
       cursor: pointer;
-      padding: 10px 20px;
-      margin: 10px;
+      padding: 0.5rem;
+      margin: 0 10px;
       border: none;
       border-radius: 5px;
       background-color: var(--button-bg-color);

@@ -6,3 +6,5 @@ import('./components/chat-threads.js');
 
 import sse from 'go-web-framework/sse.js';
 sse('/events');
+
+console.log('54334');

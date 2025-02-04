@@ -132,7 +132,7 @@ export class Store extends EventTarget {
 
   subscribe<T>(key: string, cb: (value: T) => void) {
     const value = this[key] as T;
-    if (value) {
+    if (value !== undefined && value !== null) {
       cb(value);
     }
     const eventListener = (event: Event) => {

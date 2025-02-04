@@ -43,10 +43,12 @@ export class ChatThreads extends LitElement {
     super.connectedCallback();
     this.sub1 = this.store.subscribe<Thread[]>('threads', (threads) => {
       this.threads = threads;
+      console.log('threads', threads);
       this.requestUpdate();
     });
     this.sub2 = this.store.subscribe<number>('activeThreadId', (idx) => {
       this.activeThreadId = idx;
+      console.log('activeThreadId', idx);
     });
   }
 

@@ -1,8 +1,10 @@
 {% extends "base.twig" %}
 {% block content %}
 	<chat-provider>
-		<chat-nav></chat-nav>
-		<chat-threads></chat-threads>
-		<chat-history></chat-history>
+		<main-layout>
+			<chat-nav slot="header"></chat-nav>
+			<chat-threads slot="nav"></chat-threads>
+			<chat-history></chat-history>
+		</main-layout>
 	</chat-provider>
 {% endblock %}

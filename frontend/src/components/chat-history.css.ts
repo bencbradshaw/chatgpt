@@ -1,6 +1,6 @@
 import { css } from 'lit';
 
-export const chatGptStyles = css`
+export default css`
   :host {
     display: flex;
     flex-direction: column;
@@ -18,7 +18,7 @@ export const chatGptStyles = css`
     max-height: calc(80vh - 50px);
     overflow-y: auto;
     max-width: 100%;
-    padding: 0 5%;
+    padding: 0 5% 0 120px;
   }
   .history {
     width: 800px;
@@ -28,6 +28,18 @@ export const chatGptStyles = css`
     box-shadow: rgb(255 255 255) 0px 0px 14px 0px;
     background-color: var(--primary-bg-color);
     position: relative;
+  }
+  @media (max-width: 1150px) {
+    .history-outer {
+      align-items: stretch;
+      padding: 0 20px 0 120px;
+    }
+    .history {
+      width: 100%;
+      max-width: 100%;
+      min-width: unset;
+      margin: 0;
+    }
   }
   .history.user {
     margin-left: 2rem;
@@ -43,17 +55,7 @@ export const chatGptStyles = css`
     max-height: 500px;
     margin: 0 auto;
   }
-  @media (max-width: 1000px) {
-    .history-outer {
-      padding: 0 1rem;
-    }
-    .history {
-      width: calc(100% - 7rem);
-      min-width: unset;
-      max-width: unset;
-      margin: 0.5rem;
-    }
-  }
+
   .inputs-outer {
     width: 100vw;
     max-width: 100vw;

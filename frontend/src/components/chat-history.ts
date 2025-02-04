@@ -1,15 +1,17 @@
 import type { IChatHistory, Engine, Thread } from '../types.js';
+import type { Store } from '../state/store.js';
 
-import hljs from 'highlight.js';
 import { html, LitElement, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked, Renderer, Tokens } from 'marked';
-import { chatGptStyles } from './chat-history.css.js';
+import hljs from '../hljs.js';
+
 import { githubDarkDimmed } from '../styles/github-dark-dimmed.css.js';
 import { loadingIcon } from '../atomics/loading-icon.js';
 import { consume, createContext } from '@lit/context';
-import type { Store } from '../state/store.js';
+
+import chatGptStyles from './chat-history.css.js';
 
 const renderer = new Renderer();
 
@@ -42,6 +44,7 @@ renderer.code = function ({ text, lang }: Tokens.Code): string {
 };
 
 marked.use({ renderer });
+
 @customElement('chat-history')
 export class ChatHistory extends LitElement {
   static styles = [githubDarkDimmed, chatGptStyles];
@@ -53,6 +56,7 @@ export class ChatHistory extends LitElement {
   @state() engine: Engine;
   @state() include_context: boolean;
   @consume({ context: createContext<Store>('chat-store') }) store: Store;
+
   connectedCallback() {
     super.connectedCallback();
     this.store.subscribe<Thread>('activeThread', (thread) => {
@@ -62,6 +66,7 @@ export class ChatHistory extends LitElement {
       this.requestUpdate();
     });
   }
+
   async performPostRequest(endpoint: string, body: any): Promise<any> {
     this.loading = true;
     let headers = {};
@@ -191,18 +196,8 @@ export class ChatHistory extends LitElement {
     }
   }
 
-  async runAutoReq() {
-    // auto request first gets the prompt content
-    // it checks for the presence of an image
-    // it then posts to auto with either applicaton/json or multipart/form-data
-    // it also checks for includecontext
-    // it will then await the response
-    // the response is standardized to be some sort of content for the assistant messag
-  }
-
   async runVisionReq() {
     const element = this.textareaEl;
-    const prompt = element.value;
     element.value = '';
     this.miniPreviewImageURL = '';
     try {
@@ -290,10 +285,12 @@ export class ChatHistory extends LitElement {
   updateAssistantResponse(index: number, newContent: string) {
     this.store.addToMessageContent(newContent, index);
   }
+
   deleteItem(index: number) {
     const reversedIndex = this.history.length - index - 1;
     this.store.deleteChatHistoryItem(reversedIndex);
   }
+
   render() {
     return html`
       <div class="history-outer">

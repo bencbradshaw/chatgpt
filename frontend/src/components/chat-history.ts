@@ -5,7 +5,7 @@ import { html, LitElement, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked, Renderer, Tokens } from 'marked';
-import hljs from '../hljs.js';
+import hljs from './_hljs.js';
 
 import { githubDarkDimmed } from '../styles/github-dark-dimmed.css.js';
 import { loadingIcon } from '../atomics/loading-icon.js';

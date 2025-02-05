@@ -1,3 +1,5 @@
+import type { ApiService } from '../services/api-service.js';
+
 import { IDB } from './idb.js';
 import { ChatHistoryItem, Engine, Thread } from '../types.js';
 
@@ -6,8 +8,7 @@ export class Store extends EventTarget {
   private activeThreadId: IDBValidKey;
   private activeThread: Thread;
   private threads: Thread[] = [];
-
-  constructor() {
+  constructor(private apiService: ApiService) {
     super();
     this.initDB().then(this.#emit);
   }
@@ -44,6 +45,22 @@ export class Store extends EventTarget {
       })
     );
   };
+
+  public async submitChat(prompt: string) {
+    const message: ChatHistoryItem = {
+      role: 'user',
+      content: prompt
+    };
+    await this.addMessage(message);
+    const response = await this.apiService.postToChat(
+      this.activeThread.history,
+      this.activeThread.selected_engine,
+      this.activeThread.system_message
+    );
+    for await (const message of response) {
+      this.addToMessageContent(message, this.activeThread.history.length - 1);
+    }
+  }
 
   async updateThread(thread: Partial<Thread>) {
     this.activeThread = {

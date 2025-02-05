@@ -4,7 +4,6 @@ export default css`
   :host {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 25px);
   }
   :host > * {
     box-sizing: border-box;
@@ -56,45 +55,6 @@ export default css`
     margin: 0 auto;
   }
 
-  .inputs-outer {
-    width: 100vw;
-    max-width: 100vw;
-    height: 20vh;
-    max-height: 20vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  .inputs-inner {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 0.5rem;
-  }
-
-  textarea {
-    background-color: var(--chatbox-bg-color);
-    color: white;
-    border: 1px solid #474747; /* a slightly contrasting border color */
-    padding: 1rem;
-    border-radius: 5px;
-    min-height: calc(4rem + 12px);
-    max-height: calc(20vh - 2rem);
-    margin: 0 10px;
-    min-width: 400px;
-    max-width: 800px;
-    font-family: 'Arial', sans-serif;
-    font-size: 1rem;
-  }
-  textarea:disabled {
-    cursor: not-allowed;
-  }
-  .buttons {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-  }
   .mini-preview {
     display: flex;
     align-items: center;

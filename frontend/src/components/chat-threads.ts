@@ -9,10 +9,6 @@ import { consume, createContext } from '@lit/context';
 export class ChatThreads extends LitElement {
   static styles = css`
     :host {
-      position: fixed;
-      left: 0;
-      top: 0;
-      bottom: 0;
       border-right: 1px solid white;
       padding: 0 0.5rem;
     }

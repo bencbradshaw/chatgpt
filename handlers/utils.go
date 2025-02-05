@@ -9,9 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
-	"time"
 )
 
 const (
@@ -107,47 +105,6 @@ func respondWithJSON(w http.ResponseWriter, payload interface{}) {
 		return
 	}
 	w.Write(response)
-}
-
-func downloadAndSaveImage(imageUrl string, w http.ResponseWriter) {
-	w.Header().Set(contentTypeHeader, contentTypeJSON)
-	w.Header().Set(accessControlAllow, "*")
-
-	resp, err := http.Get(imageUrl)
-	if err != nil {
-		respondWithError(w, "Error downloading image from URL: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	t := time.Now()
-	// Define the directory where the image will be saved
-	imageDir := "./frontend/src/assets/dall-e/"
-	// Define the filename based on the current timestamp
-	filename := fmt.Sprintf("dall-e_%s.png", t.Format("20060102_150405"))
-	// Combine the directory and filename
-	filepath := imageDir + filename
-
-	// Check if the directory exists and create it if necessary
-	err = os.MkdirAll(imageDir, os.ModePerm)
-	if err != nil {
-		respondWithError(w, "Error creating directory: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	out, err := os.Create(filepath)
-	if err != nil {
-		respondWithError(w, "Error creating image file: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer out.Close()
-
-	if _, err = io.Copy(out, resp.Body); err != nil {
-		respondWithError(w, "Error saving image: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// Update the URL in the JSON response if needed to match the frontend structure
-	imageUrlForResponse := strings.Replace(filepath, "./frontend", "", 1)
-	respondWithJSON(w, map[string]string{"url": imageUrlForResponse})
 }
 
 func stringifyRequest(r *http.Request) (string, error) {

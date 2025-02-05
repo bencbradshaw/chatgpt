@@ -11,7 +11,7 @@ import (
 
 var params = framework.InitParams{
 	EsbuildOpts: api.BuildOptions{
-		EntryPoints: []string{"./frontend/src/index.ts"},
+		EntryPoints: []string{"./app/src/index.ts"},
 	},
 	AutoRegisterTemplateRoutes: true,
 }
@@ -23,9 +23,6 @@ func main() {
 		return
 	}
 	mux := framework.Run(params)
-	mux.Handle("/image", cors(handlers.HandleImageRequest))
-	mux.Handle("/vision", cors(handlers.HandleVisionRequest))
-	mux.Handle("/tts", cors(handlers.HandleTtsRequest))
 	mux.Handle("/chat", cors(handlers.HandleChatRequest))
 	print("Server started at http://localhost:2025 \n")
 	http.ListenAndServe(":2025", mux)

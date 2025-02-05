@@ -61,8 +61,6 @@ export class ChatHistory extends LitElement {
     super.connectedCallback();
     this.store.subscribe<Thread>('activeThread', (thread) => {
       this.history = thread.history;
-      this.engine = thread.selected_engine;
-      this.include_context = thread.include_context;
       this.requestUpdate();
     });
   }

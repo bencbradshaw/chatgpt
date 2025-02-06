@@ -51,18 +51,25 @@ export class ChatHistory extends LitElement {
   @query('textarea') textareaEl: HTMLTextAreaElement;
   @state() loading = false;
   @state() history: IChatHistory = [];
-  @state() miniPreviewImageURL = '';
-  @state() system_message: string;
-  @state() engine: Engine;
-  @state() include_context: boolean;
   @consume({ context: createContext<Store>('chat-store') }) store: Store;
+  subscriptions: any = [];
 
   connectedCallback() {
     super.connectedCallback();
-    this.store.subscribe<Thread>('activeThread', (thread) => {
-      this.history = thread.history;
-      this.requestUpdate();
-    });
+    this.subscriptions.push(
+      this.store.subscribe<Thread>('activeThread', (thread) => {
+        this.history = thread.history;
+        this.requestUpdate();
+      }),
+      this.store.subscribe<boolean>('loading', (loading) => {
+        this.loading = loading;
+      })
+    );
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
   deleteItem(index: number) {

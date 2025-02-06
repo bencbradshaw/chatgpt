@@ -46,7 +46,9 @@ class ChatInput extends LitElement {
       justify-content: flex-start;
     }
   `;
-
+  #emitSubmitPrompt(text: string) {
+    this.dispatchEvent(new CustomEvent('submit-prompt', { detail: { text }, bubbles: true }));
+  }
   render() {
     return html`
       <div class="inputs-outer">
@@ -57,12 +59,20 @@ class ChatInput extends LitElement {
               if (e.key === 'Enter' && e.shiftKey) return;
               if (e.key === 'Enter') {
                 e.preventDefault();
-                this.submit(e);
+                this.#emitSubmitPrompt(e.target.value);
+                e.target.value = '';
                 return;
               }
             }}></textarea>
           <div class="buttons">
-            <button @click=${this.submit}>Send</button>
+            <button
+              @click=${(e) => {
+                const textarea = this.shadowRoot.querySelector('textarea');
+                this.#emitSubmitPrompt(textarea.value);
+                textarea.value = '';
+              }}>
+              Send
+            </button>
           </div>
         </div>
       </div>

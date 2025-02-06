@@ -8,7 +8,12 @@ import { ApiService } from '../services/api-service.js';
 class ChatProvider extends LitElement {
   apiService = new ApiService();
   @provide({ context: createContext('chat-store') }) store: Store = new Store(this.apiService);
+
+  #handleSubmitPrompt({ detail: { text } }: CustomEvent<{ text: string }>) {
+    this.store.submitChat(text);
+  }
+
   render() {
-    return html`<slot></slot>`;
+    return html`<slot @submit-prompt=${this.#handleSubmitPrompt}></slot>`;
   }
 }

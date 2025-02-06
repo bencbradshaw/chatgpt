@@ -8,9 +8,10 @@ export class Store extends EventTarget {
   private activeThreadId: IDBValidKey;
   private activeThread: Thread;
   private threads: Thread[] = [];
+  public loading = false;
   constructor(private apiService: ApiService) {
     super();
-    this.initDB().then(this.#emit);
+    this.initDB().then(() => this.#emit('activeThread'));
   }
 
   async initDB() {
@@ -37,9 +38,9 @@ export class Store extends EventTarget {
     };
   }
 
-  #emit = () => {
+  #emit = (key: string) => {
     this.dispatchEvent(
-      new CustomEvent('history-change', {
+      new CustomEvent(key, {
         bubbles: true,
         composed: true
       })
@@ -52,11 +53,20 @@ export class Store extends EventTarget {
       content: prompt
     };
     await this.addMessage(message);
+    this.loading = true;
+    this.#emit('loading');
+    const assistantMessage: ChatHistoryItem = {
+      role: 'assistant',
+      content: ''
+    };
     const response = await this.apiService.postToChat(
       this.activeThread.history,
       this.activeThread.selected_engine,
       this.activeThread.system_message
     );
+    this.addMessage(assistantMessage);
+    this.loading = false;
+    this.#emit('loading');
     for await (const message of response) {
       this.addToMessageContent(message, this.activeThread.history.length - 1);
     }
@@ -69,7 +79,7 @@ export class Store extends EventTarget {
       ...thread
     };
     await this.db.put('threads', this.activeThread);
-    this.#emit();
+    this.#emit('activeThread');
   }
 
   async addMessage(message: ChatHistoryItem) {
@@ -85,7 +95,7 @@ export class Store extends EventTarget {
       history: [...this.activeThread.history, message]
     };
     await this.db.put('threads', this.activeThread);
-    this.#emit();
+    this.#emit('activeThread');
   }
 
   async addToMessageContent(message: string, index: number) {
@@ -98,7 +108,7 @@ export class Store extends EventTarget {
       include_context: this.activeThread.include_context,
       history: this.activeThread.history
     };
-    this.#emit();
+    this.#emit('activeThread');
     // slip
     this.db.put('threads', this.activeThread);
   }
@@ -110,7 +120,7 @@ export class Store extends EventTarget {
       ...(await this.db.get<Thread>('threads', threadId))
     };
     await this.db.put('indices', this.activeThreadId, 'activeThreadId');
-    this.#emit();
+    this.#emit('activeThread');
   }
 
   async createNewThread() {
@@ -127,7 +137,7 @@ export class Store extends EventTarget {
       ...thread
     };
     this.threads = await this.db.getAll('threads');
-    this.#emit();
+    this.#emit('activeThread');
   }
 
   async deleteThread(threadId: IDBValidKey = this.activeThreadId) {
@@ -138,13 +148,13 @@ export class Store extends EventTarget {
       this.activeThread = this.threads.length > 0 ? this.threads[0] : null;
     }
     await this.db.put('indices', this.activeThreadId, 'activeThreadId');
-    this.#emit();
+    this.#emit('activeThread');
   }
 
   async deleteChatHistoryItem(index: number, threadId: IDBValidKey = this.activeThreadId) {
     this.activeThread.history.splice(index, 1);
     await this.db.put('threads', this.activeThread);
-    this.#emit();
+    this.#emit('activeThread');
   }
 
   subscribe<T>(key: string, cb: (value: T) => void) {
@@ -155,10 +165,10 @@ export class Store extends EventTarget {
     const eventListener = (event: Event) => {
       cb(this[key]);
     };
-    this.addEventListener('history-change', eventListener);
+    this.addEventListener(key, eventListener);
     return {
       unsubscribe: () => {
-        this.removeEventListener('history-change', eventListener);
+        this.removeEventListener(key, eventListener);
       }
     };
   }

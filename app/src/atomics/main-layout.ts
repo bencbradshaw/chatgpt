@@ -20,26 +20,26 @@ export class ThemeToggle extends LitElement {
     section[nav] {
       grid-row: 1 / 4;
       grid-column: 1 / 2;
-      background-color: red;
+      display: flex;
+      flex-direction: column;
     }
 
     header {
       grid-row: 1 / 2;
       grid-column: 2 / 3;
-      background-color: blue;
     }
 
     main {
       grid-row: 2 / 3;
       grid-column: 2 / 3;
-      overflow-y: auto;
-      background-color: green;
+      display: flex;
+      flex-direction: column;
+      overflow-y: hidden;
     }
 
-    section[footer] {
+    footer {
       grid-row: 3 / 4;
       grid-column: 2 / 3;
-      background-color: orange;
     }
   `;
 
@@ -54,9 +54,9 @@ export class ThemeToggle extends LitElement {
       <main>
         <slot></slot>
       </main>
-      <section footer>
+      <footer>
         <slot name="footer"></slot>
-      </section>
+      </footer>
     `;
   }
 }

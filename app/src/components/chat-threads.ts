@@ -9,6 +9,7 @@ import { consume, createContext } from '@lit/context';
 export class ChatThreads extends LitElement {
   static styles = css`
     :host {
+      flex-grow: 1;
       border-right: 1px solid white;
       padding: 0 0.5rem;
     }
@@ -39,12 +40,12 @@ export class ChatThreads extends LitElement {
     super.connectedCallback();
     this.sub1 = this.store.subscribe<Thread[]>('threads', (threads) => {
       this.threads = threads;
-      console.log('threads', threads);
+      console.log('chat threads threads', threads);
       this.requestUpdate();
     });
     this.sub2 = this.store.subscribe<number>('activeThreadId', (idx) => {
       this.activeThreadId = idx;
-      console.log('activeThreadId', idx);
+      console.log('chat threads activeThreadId', idx);
     });
   }
 

@@ -57,11 +57,11 @@ export class ChatHistory extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.subscriptions.push(
-      this.store.subscribe<Thread>('activeThread', (thread) => {
+      this.store.subscribe('activeThread', (thread) => {
         this.history = thread.history;
         this.requestUpdate();
       }),
-      this.store.subscribe<boolean>('loading', (loading) => {
+      this.store.subscribe('loading', (loading) => {
         this.loading = loading;
       })
     );

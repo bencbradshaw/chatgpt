@@ -2,8 +2,10 @@ import { css } from 'lit';
 
 export default css`
   :host {
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
   }
   :host > * {
     box-sizing: border-box;
@@ -13,11 +15,8 @@ export default css`
     flex-direction: column-reverse;
     align-items: center;
     justify-content: flex-start;
-    height: calc(80vh - 50px);
-    max-height: calc(80vh - 50px);
     overflow-y: auto;
     max-width: 100%;
-    padding: 0 5% 0 120px;
   }
   .history {
     width: 800px;

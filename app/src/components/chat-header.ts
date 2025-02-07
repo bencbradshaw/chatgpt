@@ -3,40 +3,27 @@ import { property, state } from 'lit/decorators.js';
 import type { Store } from '../state/store.js';
 import { Thread } from '../types.js';
 import { consume, createContext } from '@lit/context';
+import { buttonsCss } from '../styles/buttons.css.js';
 
-export class ChatNav extends LitElement {
-  static styles = css`
-    :host {
-      height: auto;
-    }
-    nav {
-      div {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        textarea {
-          margin: 0 5px;
+export class ChatHeader extends LitElement {
+  static styles = [
+    buttonsCss,
+    css`
+      :host {
+        height: auto;
+      }
+      nav {
+        div {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          textarea {
+            margin: 0 5px;
+          }
         }
       }
-    }
-    button {
-      outline: none;
-      color: var(--primary-font-color);
-      cursor: pointer;
-      padding: 0.5rem;
-      margin: 0 10px;
-      border: none;
-      border-radius: 5px;
-      background-color: var(--button-bg-color);
-      color: var(--primary-font-color);
-    }
-    button:hover {
-      background-color: var(--button-bg-color-hover);
-    }
-    button:active {
-      background-color: var(--button-bg-color);
-    }
-  `;
+    `
+  ];
 
   @property({ type: String }) engine = sessionStorage.getItem('engine') ?? 'gpt-4o-mini';
   @property({ type: Boolean }) includeContext = JSON.parse(sessionStorage.getItem('include_context')) ?? true;
@@ -96,4 +83,4 @@ export class ChatNav extends LitElement {
   }
 }
 
-customElements.define('chat-nav', ChatNav);
+customElements.define('chat-header', ChatHeader);

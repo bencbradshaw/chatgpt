@@ -3,7 +3,7 @@ import { customElement } from 'lit/decorators.js';
 import './components/chat-provider.js';
 import './atomics/main-layout.js';
 import './components/chat-history.js';
-import './components/chat-nav.js';
+import './components/chat-header.js';
 import './components/chat-threads.js';
 import './components/chat-input.js';
 
@@ -13,7 +13,7 @@ export class AppRoot extends LitElement {
     return html`
       <chat-provider>
         <main-layout>
-          <chat-nav slot="header"></chat-nav>
+          <chat-header slot="header"></chat-header>
           <chat-threads slot="nav"></chat-threads>
           <chat-history></chat-history>
           <chat-input slot="footer"></chat-input>

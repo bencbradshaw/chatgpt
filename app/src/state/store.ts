@@ -1,14 +1,17 @@
 import type { ApiService } from '../services/api-service.js';
 
+import { StateStore, prop } from 'go-web-framework/state-store.js';
+
 import { IDB } from './idb.js';
 import { ChatHistoryItem, Engine, Thread } from '../types.js';
 
-export class Store extends EventTarget {
+export class Store extends StateStore {
   private db: IDB = new IDB();
-  private activeThreadId: IDBValidKey;
-  private activeThread: Thread;
-  private threads: Thread[] = [];
-  public loading = false;
+  @prop() activeThreadId: IDBValidKey;
+  @prop() activeThread: Thread;
+  @prop() threads: Thread[] = [];
+  @prop() loading = false;
+
   constructor(private apiService: ApiService) {
     super();
     this.initDB().then(() => this.#emit('activeThread'));
@@ -155,21 +158,5 @@ export class Store extends EventTarget {
     this.activeThread.history.splice(index, 1);
     await this.db.put('threads', this.activeThread);
     this.#emit('activeThread');
-  }
-
-  subscribe<T>(key: string, cb: (value: T) => void) {
-    const value = this[key] as T;
-    if (value !== undefined && value !== null) {
-      cb(value);
-    }
-    const eventListener = (event: Event) => {
-      cb(this[key]);
-    };
-    this.addEventListener(key, eventListener);
-    return {
-      unsubscribe: () => {
-        this.removeEventListener(key, eventListener);
-      }
-    };
   }
 }

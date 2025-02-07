@@ -1,51 +1,56 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-
+import { buttonsCss } from '../styles/buttons.css.js';
 @customElement('chat-input')
 class ChatInput extends LitElement {
   @property({ type: String }) placeholder = 'Type a message...';
 
-  static styles = css`
-    .inputs-outer {
-      width: 100vw;
-      max-width: 100vw;
-      height: 20vh;
-      max-height: 20vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .inputs-inner {
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 0.5rem;
-    }
+  static styles = [
+    buttonsCss,
+    css`
+      :host {
+        max-width: 100%;
+      }
+      .inputs-outer {
+        width: 100vw;
+        max-width: 100vw;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .inputs-inner {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0.5rem;
+        margin: 0 auto;
+      }
 
-    textarea {
-      background-color: var(--chatbox-bg-color);
-      color: white;
-      border: 1px solid #474747; /* a slightly contrasting border color */
-      padding: 1rem;
-      border-radius: 5px;
-      min-height: calc(4rem + 12px);
-      max-height: 100%;
-      margin: 0 10px;
-      min-width: 400px;
-      max-width: 800px;
-      font-family: 'Arial', sans-serif;
-      font-size: 1rem;
-    }
-    textarea:disabled {
-      cursor: not-allowed;
-    }
-    .buttons {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-    }
-  `;
+      textarea {
+        background-color: var(--chatbox-bg-color);
+        color: white;
+        border: 1px solid #474747; /* a slightly contrasting border color */
+        padding: 1rem;
+        border-radius: 5px;
+        min-height: calc(4rem + 12px);
+        max-height: 5rem;
+        margin: 0 10px;
+        min-width: 800px;
+        max-width: 800px;
+        font-family: 'Arial', sans-serif;
+        font-size: 1rem;
+      }
+      textarea:disabled {
+        cursor: not-allowed;
+      }
+      .buttons {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+    `
+  ];
   #emitSubmitPrompt(text: string) {
     this.dispatchEvent(new CustomEvent('submit-prompt', { detail: { text }, bubbles: true }));
   }

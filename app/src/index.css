@@ -1,24 +1,42 @@
 :root {
-  --primary-font-color: #ffffff;
-  --primary-bg-color: #282c34;
-  --chatbox-bg-color: #353b45;
-  --button-bg-color: #3e4451;
-  --button-bg-color-hover: #5e687e;
   font-size: 16px;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: var(--primary-font-color);
-  background-color: var(--primary-bg-color);
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
-
+  color-scheme: light primary;
+ .dark{
+  --color-primary-100: #282c34;
+  --color-primary-200: #353b45;
+  --color-primary-300: #3e4451;
+  --color-primary-400: #5e687e;
+  --color-primary-500: #7b8a9a;
+  --primary-font-color: #ffffff;
+  --primary-bg-color: var(--color-primary-100);
+  --chatbox-bg-color: var(--color-primary-200);
+  --button-bg-color: var(--color-primary-300);
+  --button-bg-color-hover: var(--color-primary-400);
+  color: var(--primary-font-color);
+  background-color: var(--primary-bg-color);
+ }
+ .light{
+  --color-primary-100: #ffffff;
+  --color-primary-200: #f0f0f0;
+  --color-primary-300: #d9d9d9;
+  --color-primary-400: #bfbfbf;
+  --color-primary-500: #a6a6a6;
+  --primary-font-color: #000000;
+  --primary-bg-color: var(--color-primary-100);
+  --chatbox-bg-color: var(--color-primary-200);
+  --button-bg-color: var(--color-primary-300);
+  --button-bg-color-hover: var(--color-primary-400);
+  color: var(--primary-font-color);
+  background-color: var(--primary-bg-color);
+ }
 }
 
 a {

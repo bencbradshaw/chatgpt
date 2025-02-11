@@ -10,7 +10,6 @@ export class ChatThreads extends LitElement {
   static styles = css`
     :host {
       flex-grow: 1;
-      border-right: 1px solid white;
       padding: 0 0.5rem;
     }
     .section {
@@ -38,12 +37,12 @@ export class ChatThreads extends LitElement {
   @consume({ context: createContext<Store>('chat-store') }) store: Store;
   connectedCallback() {
     super.connectedCallback();
-    this.sub1 = this.store.subscribe<Thread[]>('threads', (threads) => {
+    this.sub1 = this.store.subscribe('threads', (threads) => {
       this.threads = threads;
       console.log('chat threads threads', threads);
       this.requestUpdate();
     });
-    this.sub2 = this.store.subscribe<number>('activeThreadId', (idx) => {
+    this.sub2 = this.store.subscribe('activeThreadId', (idx) => {
       this.activeThreadId = idx;
       console.log('chat threads activeThreadId', idx);
     });
@@ -61,11 +60,17 @@ export class ChatThreads extends LitElement {
       <section>
         ${this.threads.map((thread, i) => {
           return html`
-            <div
-              class="thread ${this.activeThreadId === thread.id ? 'active' : ''}"
-              @click=${() => this.store.selectThread(thread.id)}>
-              ${thread.headline.slice(0, 10) + '...'}
-            </div>
+            <floating-menu>
+              <div
+                slot="invoker"
+                class="thread ${this.activeThreadId === thread.id ? 'active' : ''}"
+                @click=${() => this.store.selectThread(thread.id)}>
+                ${thread.headline.slice(0, 10) + '...'}
+              </div>
+              <div slot="menu">
+                <button @click=${() => this.store.deleteThread(thread.id)}>delete</button>
+              </div>
+            </floating-menu>
           `;
         })}
         <div class="thread" @click=${() => this.store.createNewThread()}>+ new thread</div>

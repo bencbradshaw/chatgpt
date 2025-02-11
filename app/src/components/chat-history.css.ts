@@ -41,11 +41,11 @@ export default css`
   }
   .history.user {
     margin-left: 2rem;
-    border-radius: 16px 16px 0 16px;
+    border-radius: 20px;
   }
   .history.assistant,
   .history.bot {
-    border-radius: 16px 16px 16px 0;
+    border-radius: 20px;
     margin-right: 2rem;
   }
   img {
@@ -85,7 +85,7 @@ export default css`
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    transform: translateY(16px);
+    transform: translateY(20px);
   }
   button.copy {
     margin: 0;
@@ -99,8 +99,8 @@ export default css`
     position: absolute;
     top: 8px;
     right: 8px;
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 25%;
   }
   button.delete:hover {

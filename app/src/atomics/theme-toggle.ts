@@ -23,31 +23,19 @@ export class ThemeToggle extends LitElement {
     }
   `;
 
-  lightThemeVars = {
-    '--primary-font-color': '#000000',
-    '--primary-bg-color': '#ffffff',
-    '--chatbox-bg-color': '#f6f8fa',
-    '--button-bg-color': '#f0f1f4',
-    '--button-bg-color-hover': '#e1e4e8',
-    '--color': 'rgba(0, 0, 0, 0.87)',
-    'background-color': '#ffffff'
-  };
-
-  darkThemeVars = {
-    '--primary-font-color': '#ffffff',
-    '--primary-bg-color': '#282c34',
-    '--chatbox-bg-color': '#353b45',
-    '--button-bg-color': '#3e4451',
-    '--button-bg-color-hover': '#5e687e',
-    '--color': 'rgba(255, 255, 255, 0.87)',
-    'background-color': '#282c34'
-  };
   @property() isDarkTheme = true;
-
+  connectedCallback(): void {
+    super.connectedCallback();
+    document.body.classList.add('dark');
+    this.isDarkTheme = true;
+  }
   toggleTheme() {
-    const newThemeVars = this.isDarkTheme ? this.lightThemeVars : this.darkThemeVars;
-    for (const [key, value] of Object.entries(newThemeVars)) {
-      document.documentElement.style.setProperty(key, value);
+    if (document.body.classList.contains('dark')) {
+      document.body.classList.remove('dark');
+      document.body.classList.add('light');
+    } else {
+      document.body.classList.remove('light');
+      document.body.classList.add('dark');
     }
     this.isDarkTheme = !this.isDarkTheme;
   }

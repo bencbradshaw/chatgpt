@@ -17,7 +17,10 @@ export class ThemeToggle extends LitElement {
       width: 100vw;
     }
 
-    section[nav] {
+    nav {
+      background-color: var(--chatbox-bg-color);
+      border-radius: 20px;
+      margin: 5px;
       grid-row: 1 / 4;
       grid-column: 1 / 2;
       display: flex;
@@ -30,24 +33,34 @@ export class ThemeToggle extends LitElement {
     }
 
     main {
+      background-color: var(--chatbox-bg-color);
       grid-row: 2 / 3;
       grid-column: 2 / 3;
       display: flex;
       flex-direction: column;
       overflow-y: hidden;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      margin: 20px 20px 0 20px;
+      max-width: calc(100vw - 40px - 120px);
     }
 
     footer {
+      background-color: var(--chatbox-bg-color);
       grid-row: 3 / 4;
       grid-column: 2 / 3;
+      border-bottom-right-radius: 20px;
+      border-bottom-left-radius: 20px;
+      margin: 0px 20px 20px 20px;
+      max-width: calc(100vw - 40px - 120px);
     }
   `;
 
   render() {
     return html`
-      <section nav>
+      <nav>
         <slot name="nav"></slot>
-      </section>
+      </nav>
       <header>
         <slot name="header"></slot>
       </header>

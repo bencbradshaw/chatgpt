@@ -13,9 +13,9 @@ export class AppRoot extends LitElement {
     return html`
       <chat-provider>
         <main-layout>
-          <chat-header slot="header"></chat-header>
           <chat-threads slot="nav"></chat-threads>
           <chat-history></chat-history>
+          <chat-header slot="footer"></chat-header>
           <chat-input slot="footer"></chat-input>
         </main-layout>
       </chat-provider>

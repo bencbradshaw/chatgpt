@@ -10,6 +10,27 @@ export default css`
   :host > * {
     box-sizing: border-box;
   }
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-primary-300);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-primary-400);
+    border-radius: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-500);
+    cursor: grab;
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--color-primary-400);
+    cursor: grabbing;
+  }
   .history-outer {
     display: flex;
     flex-direction: column-reverse;

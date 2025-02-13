@@ -70,13 +70,6 @@ export class ChatHeader extends LitElement {
             }} />
             </textarea>
 
-          <button
-            @click=${(e) => {
-              this.store.deleteThread();
-            }}>
-            Delete Thread
-          </button>
-          <theme-toggle style="display: inline"></theme-toggle>
         </div>
       </nav>
     `;

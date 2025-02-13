@@ -1,35 +1,50 @@
-import type { Store } from '../state/store.js';
-import { css, html, LitElement, nothing } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
-import { Thread } from '../types.js';
-import '../atomics/theme-toggle.js';
 import { consume, createContext } from '@lit/context';
+import { LitElement, css, html, nothing } from 'lit';
+import { customElement, state } from 'lit/decorators.js';
+import '../atomics/theme-toggle.js';
+import type { Store } from '../state/store.js';
+import { buttonsCss } from '../styles/buttons.css.js';
+import { Thread } from '../types.js';
 
 @customElement('chat-threads')
 export class ChatThreads extends LitElement {
-  static styles = css`
-    :host {
-      flex-grow: 1;
-      padding: 0 0.5rem;
-    }
-    .section {
-      display: flex;
-      flex-direction: column;
-    }
-    .thread {
-      box-sizing: border-box;
-      border: 1px solid transparent;
-      margin: 1rem 0;
-      padding: 0.25rem;
-    }
-    .active {
-      border: 1px solid #939393;
-    }
-    .thread:hover {
-      border: 1px solid white;
-      cursor: pointer;
-    }
-  `;
+  static styles = [
+    buttonsCss,
+    css`
+      :host {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      section {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        &[upper] {
+          padding-top: 1rem;
+          .thread {
+            box-sizing: border-box;
+            border: 1px solid transparent;
+            padding: 1rem 0.25rem;
+          }
+          .active {
+            background-color: #939393;
+          }
+          .thread:hover {
+            background-color: #93939395;
+            cursor: pointer;
+          }
+        }
+        &[lower] {
+          theme-toggle {
+            margin: 0 auto;
+          }
+        }
+      }
+    `
+  ];
   @state() threads: Thread[] = [];
   @state() activeThreadId: IDBValidKey;
   sub1: { unsubscribe: () => void };
@@ -57,7 +72,7 @@ export class ChatThreads extends LitElement {
   render() {
     if (!this.threads.length || this.activeThreadId === undefined) return nothing;
     return html`
-      <section>
+      <section upper>
         ${this.threads.map((thread, i) => {
           return html`
             <floating-menu>
@@ -65,15 +80,18 @@ export class ChatThreads extends LitElement {
                 slot="invoker"
                 class="thread ${this.activeThreadId === thread.id ? 'active' : ''}"
                 @click=${() => this.store.selectThread(thread.id)}>
-                ${thread.headline.slice(0, 10) + '...'}
+                ${thread.headline.slice(0, 21) + '...'}
               </div>
-              <div slot="menu">
+              <div>
                 <button @click=${() => this.store.deleteThread(thread.id)}>delete</button>
               </div>
             </floating-menu>
           `;
         })}
         <div class="thread" @click=${() => this.store.createNewThread()}>+ new thread</div>
+      </section>
+      <section lower>
+        <theme-toggle> </theme-toggle>
       </section>
     `;
   }

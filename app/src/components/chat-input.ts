@@ -1,6 +1,11 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { buttonsCss } from '../styles/buttons.css.js';
+const SENDSVG = html`
+  <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 27L28 15L2 3L2 13L20 15L2 17L2 27Z" fill="currentColor" />
+  </svg>
+`;
 @customElement('chat-input')
 class ChatInput extends LitElement {
   @property({ type: String }) placeholder = 'Type a message...';
@@ -12,8 +17,6 @@ class ChatInput extends LitElement {
         max-width: 100%;
       }
       .inputs-outer {
-        width: 100vw;
-        max-width: 100vw;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -21,7 +24,7 @@ class ChatInput extends LitElement {
       }
       .inputs-inner {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         justify-content: center;
         padding: 0.5rem;
         margin: 0 auto;
@@ -30,24 +33,41 @@ class ChatInput extends LitElement {
       textarea {
         background-color: var(--chatbox-bg-color);
         color: white;
-        border: 1px solid #474747; /* a slightly contrasting border color */
+        border: none;
         padding: 1rem;
-        border-radius: 5px;
-        min-height: calc(4rem + 12px);
-        max-height: 5rem;
+        border-radius: 20px;
+        resize: none;
+        min-height: 1rem;
+        max-height: 1rem;
+        overflow: hidden;
         margin: 0 10px;
         min-width: 800px;
         max-width: 800px;
         font-family: 'Arial', sans-serif;
         font-size: 1rem;
-      }
-      textarea:disabled {
-        cursor: not-allowed;
+        line-height: 1rem;
+        background-color: var(--color-primary-300);
+        &:disabled {
+          cursor: not-allowed;
+        }
+        &:focus {
+          outline: none;
+        }
       }
       .buttons {
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
+        button {
+          border-radius: 50%;
+          margin: 0;
+          svg {
+            height: 20px;
+            width: 20px;
+            padding-left: 2px;
+            padding-top: 2px;
+          }
+        }
       }
     `
   ];
@@ -76,7 +96,7 @@ class ChatInput extends LitElement {
                 this.#emitSubmitPrompt(textarea.value);
                 textarea.value = '';
               }}>
-              Send
+              ${SENDSVG}
             </button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
 
 @customElement('main-layout')
@@ -10,21 +10,21 @@ export class ThemeToggle extends LitElement {
   // the rest is for the chat history, it will grow between top and bottom, and scroll
   static styles = css`
     :host {
+      --nav-width: 200px;
       display: grid;
       grid-template-rows: auto 1fr auto;
-      grid-template-columns: 120px 1fr;
+      grid-template-columns: var(--nav-width) 1fr;
       height: 100vh;
       width: 100vw;
     }
 
     nav {
-      background-color: var(--chatbox-bg-color);
       border-radius: 20px;
-      margin: 5px;
       grid-row: 1 / 4;
       grid-column: 1 / 2;
       display: flex;
       flex-direction: column;
+      margin: 20px 0;
     }
 
     header {
@@ -41,8 +41,8 @@ export class ThemeToggle extends LitElement {
       overflow-y: hidden;
       border-top-left-radius: 20px;
       border-top-right-radius: 20px;
-      margin: 20px 20px 0 20px;
-      max-width: calc(100vw - 40px - 120px);
+      margin: 20px 0 0 0;
+      max-width: calc(100vw - var(--nav-width));
     }
 
     footer {
@@ -51,8 +51,8 @@ export class ThemeToggle extends LitElement {
       grid-column: 2 / 3;
       border-bottom-right-radius: 20px;
       border-bottom-left-radius: 20px;
-      margin: 0px 20px 20px 20px;
-      max-width: calc(100vw - 40px - 120px);
+      margin: 0;
+      max-width: calc(100vw - var(--nav-width));
     }
   `;
 

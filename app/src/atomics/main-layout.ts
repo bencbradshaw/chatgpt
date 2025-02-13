@@ -41,7 +41,7 @@ export class ThemeToggle extends LitElement {
       overflow-y: hidden;
       border-top-left-radius: 20px;
       border-top-right-radius: 20px;
-      margin: 20px 0 0 0;
+      margin: 20px 0.5rem 0 0.5rem;
       max-width: calc(100vw - var(--nav-width));
     }
 
@@ -51,7 +51,7 @@ export class ThemeToggle extends LitElement {
       grid-column: 2 / 3;
       border-bottom-right-radius: 20px;
       border-bottom-left-radius: 20px;
-      margin: 0;
+      margin: 0 0.5rem 0.5rem 0.5rem;
       max-width: calc(100vw - var(--nav-width));
     }
   `;

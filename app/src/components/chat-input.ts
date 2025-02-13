@@ -21,6 +21,7 @@ class ChatInput extends LitElement {
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        padding: 0.5rem 0;
       }
       .inputs-inner {
         display: flex;
@@ -61,6 +62,10 @@ class ChatInput extends LitElement {
         button {
           border-radius: 50%;
           margin: 0;
+          background-color: transparent;
+          &:hover {
+            background-color: var(--color-primary-300);
+          }
           svg {
             height: 20px;
             width: 20px;

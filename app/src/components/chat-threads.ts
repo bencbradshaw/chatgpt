@@ -27,6 +27,7 @@ export class ChatThreads extends LitElement {
           .thread {
             box-sizing: border-box;
             border: 1px solid transparent;
+            border-radius: 0 5px 5px 0;
             padding: 1rem 0.25rem;
           }
           .active {
@@ -36,10 +37,12 @@ export class ChatThreads extends LitElement {
             background-color: #93939395;
             cursor: pointer;
           }
+          button.new-thread {
+            margin-top: 1rem;
+          }
         }
         &[lower] {
           theme-toggle {
-            margin: 0 auto;
           }
         }
       }
@@ -88,7 +91,7 @@ export class ChatThreads extends LitElement {
             </floating-menu>
           `;
         })}
-        <div class="thread" @click=${() => this.store.createNewThread()}>+ new thread</div>
+        <button class="new-thread" @click=${() => this.store.createNewThread()}>new thread</button>
       </section>
       <section lower>
         <theme-toggle> </theme-toggle>

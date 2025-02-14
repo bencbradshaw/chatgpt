@@ -25,7 +25,6 @@ export class FloatingMenu extends LitElement {
   close() {
     const popoverEl = this.shadowRoot.querySelector('div[popover') as HTMLElement;
     popoverEl.hidePopover();
-    this.opened = false;
   }
 
   #handleClicked(e: PointerEvent) {
@@ -47,7 +46,6 @@ export class FloatingMenu extends LitElement {
       popoverEl.style.left = `${invokerRect.x + invokerRect.width + offsetBuffer}px`;
       popoverEl.style.top = `${invokerRect.y + invokerRect.height + offsetBuffer}px`;
     }
-    this.opened = true;
   }
 
   render() {
@@ -55,7 +53,12 @@ export class FloatingMenu extends LitElement {
       <div id="target" @click=${this.#handleClicked}>
         <slot name="invoker"></slot>
       </div>
-      <div id="menu" popover>
+      <div
+        id="menu"
+        popover
+        @toggle=${(e: ToggleEvent) => {
+          this.opened = e.newState === 'open';
+        }}>
         <slot></slot>
       </div>
     `;

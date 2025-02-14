@@ -3,7 +3,7 @@ import { css } from 'lit';
 export const textareaCss = css`
   textarea {
     background-color: var(--chatbox-bg-color);
-    color: white;
+    color: var(--primary-font-color);
     border: none;
     padding: 1rem;
     border-radius: 20px;

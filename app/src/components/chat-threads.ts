@@ -43,6 +43,7 @@ export class ChatThreads extends LitElement {
         }
         &[lower] {
           theme-toggle {
+            margin: 0 1rem;
           }
         }
       }

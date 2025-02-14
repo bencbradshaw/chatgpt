@@ -7,6 +7,7 @@ export const githubDarkDimmed = css`
     display: block;
     overflow-x: auto;
     padding: 1em;
+    border-radius: 5px;
   }
   code.hljs {
     padding: 3px 5px;

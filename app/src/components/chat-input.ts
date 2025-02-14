@@ -2,11 +2,13 @@ import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { buttonsCss } from '../styles/buttons.css.js';
 import { textareaCss } from '../styles/textarea.css.js';
+
 const SENDSVG = html`
   <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M2 27L28 15L2 3L2 13L20 15L2 17L2 27Z" fill="currentColor" />
   </svg>
 `;
+
 @customElement('chat-input')
 class ChatInput extends LitElement {
   @property({ type: String }) placeholder = 'Type a message...';
@@ -65,6 +67,7 @@ class ChatInput extends LitElement {
     return html`
       <div class="inputs-outer">
         <div class="inputs-inner">
+          <chat-options></chat-options>
           <textarea
             title="Enter to send. Shift+Enter for new line."
             @keydown=${(e) => {

@@ -2,7 +2,7 @@ import { LitElement, css, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { buttonsCss } from '../styles/buttons.css.js';
 const MOONSVG = html`
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       fill-rule="evenodd"
       clip-rule="evenodd"
@@ -11,7 +11,7 @@ const MOONSVG = html`
   </svg>
 `;
 const SUNSVG = html`
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       fill-rule="evenodd"
       clip-rule="evenodd"
@@ -35,7 +35,6 @@ export class ThemeToggle extends LitElement {
 
       .toggle-btn {
         cursor: pointer;
-        padding: 0;
         border: none;
         border-radius: 5px;
         background-color: var(--button-bg-color);
@@ -43,7 +42,7 @@ export class ThemeToggle extends LitElement {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 8px;
+        padding: 6px;
       }
 
       .toggle-btn:hover {

@@ -32,6 +32,7 @@ export default css`
     cursor: grabbing;
   }
   .history-outer {
+    flex-grow: 1;
     display: flex;
     flex-direction: column-reverse;
     align-items: center;
@@ -44,7 +45,6 @@ export default css`
     min-width: 800px;
     max-width: 800px;
     padding: 1rem 2rem;
-    box-shadow: rgb(255 255 255) 0px 0px 14px 0px;
     background-color: var(--primary-bg-color);
     position: relative;
   }
@@ -114,18 +114,22 @@ export default css`
     width: auto;
   }
   button.delete {
-    background-color: #424040;
+    background-color: transparent;
+    color: var(--color-primary-500);
     margin: 0;
-    padding: 0 0 4px 0;
+    padding: 0;
     position: absolute;
     top: 8px;
     right: 8px;
     width: 20px;
     height: 20px;
     border-radius: 25%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   button.delete:hover {
-    background-color: #a01f1f;
+    background-color: #a01f1f9c;
   }
   pre {
     margin-top: 0;

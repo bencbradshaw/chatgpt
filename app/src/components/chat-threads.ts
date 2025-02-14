@@ -71,7 +71,10 @@ export class ChatThreads extends LitElement {
     this.sub1.unsubscribe();
     this.sub2.unsubscribe();
   }
-
+  sliceHeadline(headline: string) {
+    if (headline.length < 23) return headline;
+    return headline.slice(0, 23) + '...';
+  }
   render() {
     if (!this.threads.length || this.activeThreadId === undefined) return nothing;
     return html`
@@ -83,7 +86,7 @@ export class ChatThreads extends LitElement {
                 slot="invoker"
                 class="thread ${this.activeThreadId === thread.id ? 'active' : ''}"
                 @click=${() => this.store.selectThread(thread.id)}>
-                ${thread.headline.slice(0, 21) + '...'}
+                ${this.sliceHeadline(thread.headline)}
               </div>
               <div>
                 <button @click=${() => this.store.deleteThread(thread.id)}>delete</button>

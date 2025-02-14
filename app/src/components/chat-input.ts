@@ -1,6 +1,7 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { buttonsCss } from '../styles/buttons.css.js';
+import { textareaCss } from '../styles/textarea.css.js';
 const SENDSVG = html`
   <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M2 27L28 15L2 3L2 13L20 15L2 17L2 27Z" fill="currentColor" />
@@ -12,9 +13,14 @@ class ChatInput extends LitElement {
 
   static styles = [
     buttonsCss,
+    textareaCss,
     css`
       :host {
         max-width: 100%;
+      }
+      textarea {
+        min-width: 800px;
+        max-width: 800px;
       }
       .inputs-outer {
         display: flex;
@@ -31,30 +37,6 @@ class ChatInput extends LitElement {
         margin: 0 auto;
       }
 
-      textarea {
-        background-color: var(--chatbox-bg-color);
-        color: white;
-        border: none;
-        padding: 1rem;
-        border-radius: 20px;
-        resize: none;
-        min-height: 1rem;
-        max-height: 1rem;
-        overflow: hidden;
-        margin: 0 10px;
-        min-width: 800px;
-        max-width: 800px;
-        font-family: 'Arial', sans-serif;
-        font-size: 1rem;
-        line-height: 1rem;
-        background-color: var(--color-primary-300);
-        &:disabled {
-          cursor: not-allowed;
-        }
-        &:focus {
-          outline: none;
-        }
-      }
       .buttons {
         display: flex;
         flex-direction: column;

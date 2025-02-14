@@ -20,6 +20,8 @@
   --chatbox-bg-color: var(--color-primary-200);
   --button-bg-color: var(--color-primary-300);
   --button-bg-color-hover: var(--color-primary-400);
+  --box-shadow-1:  rgb(255 255 255) 0px 0px 8px 0px;
+
   color: var(--primary-font-color);
   background-color: var(--primary-bg-color);
  }
@@ -34,6 +36,7 @@
   --chatbox-bg-color: var(--color-primary-200);
   --button-bg-color: var(--color-primary-300);
   --button-bg-color-hover: var(--color-primary-400);
+  --box-shadow-1: rgb(0, 0, 0) 0px 0px 8px 0px;
   color: var(--primary-font-color);
   background-color: var(--primary-bg-color);
  }

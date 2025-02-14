@@ -1,5 +1,5 @@
-import type { IChatHistory, Engine, Thread } from '../types.js';
 import type { Store } from '../state/store.js';
+import type { IChatHistory } from '../types.js';
 
 import { html, LitElement, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
@@ -7,9 +7,9 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked, Renderer, Tokens } from 'marked';
 import hljs from './_hljs.js';
 
-import { githubDarkDimmed } from '../styles/github-dark-dimmed.css.js';
-import { loadingIcon } from '../atomics/loading-icon.js';
 import { consume, createContext } from '@lit/context';
+import { loadingIcon } from '../atomics/loading-icon.js';
+import { githubDarkDimmed } from '../styles/github-dark-dimmed.css.js';
 
 import chatGptStyles from './chat-history.css.js';
 
@@ -84,7 +84,22 @@ export class ChatHistory extends LitElement {
         ${[...this.history].reverse().map(
           (item, i) => html`
             <p class="history ${item.role}">
-              <button class="delete" @click=${(e) => this.deleteItem(i)}>x</button>
+              <button class="delete" @click=${(e) => this.deleteItem(i)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M18 6L6 18"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                  <path
+                    d="M6 6L18 18"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </button>
               ${unsafeHTML(marked.parse(item.content) as string)}
               ${item.custom ? unsafeHTML(item.custom as string) : nothing}
             </p>

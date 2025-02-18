@@ -14,6 +14,7 @@ func HandleChatRequest(w http.ResponseWriter, r *http.Request) {
 
 	var chatPrompt models.ChatPrompt
 	if err := json.NewDecoder(r.Body).Decode(&chatPrompt); err != nil {
+		log.Println("Error decoding request body:", err)
 		respondWithError(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}

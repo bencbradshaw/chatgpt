@@ -23,7 +23,7 @@ func main() {
 		return
 	}
 	mux := framework.Run(params)
-	mux.Handle("/chat", cors(handlers.HandleChatRequest))
+	mux.Handle("/api/chat", cors(handlers.HandleChatRequest))
 	print("Server started at http://localhost:2025 \n")
 	http.ListenAndServe(":2025", mux)
 }

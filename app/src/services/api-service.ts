@@ -3,6 +3,7 @@ import { TextEventStream } from './text-event-stream.js';
 
 export class ApiService {
   static async post(endpoint: string, body: any): Promise<Response> {
+    console.log(body);
     let headers = {};
     if (body instanceof FormData) {
       headers = {
@@ -32,6 +33,6 @@ export class ApiService {
       ],
       engine
     };
-    return new TextEventStream(await ApiService.post('/chat', reqBody));
+    return new TextEventStream(await ApiService.post('/api/chat', reqBody));
   }
 }

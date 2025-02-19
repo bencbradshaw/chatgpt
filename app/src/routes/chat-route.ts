@@ -16,8 +16,8 @@ export class ChatRoute extends LitElement {
       <chat-provider>
         <main-layout>
           <div slot="header">
-            <a href="/">Home</a>
-            <a href="/account">Account</a>
+            <a href="/app/">Home</a>
+            <a href="/app/account">Account</a>
           </div>
           <chat-threads slot="nav"></chat-threads>
           <chat-history></chat-history>

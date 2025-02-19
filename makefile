@@ -2,7 +2,7 @@
 run:
 	go run main.go --dev
 build:
-	cd frontend && npm run tsc && cd ..
+	cd app && npm run tsc && cd ..
 	rm -rf static public
 	export BUILD=true && go run main.go
 	go build -o public/main main.go 

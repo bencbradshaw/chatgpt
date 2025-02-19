@@ -93,3 +93,91 @@ export const githubDarkDimmed = css`
     background-color: #78191b;
   }
 `;
+export const themedDark = css`
+  .hljs {
+    background-color: var(--hljs-background-color);
+    color: var(--hljs-font-color);
+  }
+
+  .hljs-doctag,
+  .hljs-keyword,
+  .hljs-meta .hljs-keyword,
+  .hljs-template-tag,
+  .hljs-template-variable,
+  .hljs-type,
+  .hljs-variable.language_ {
+    color: var(--hljs-keyword-color);
+  }
+
+  .hljs-title,
+  .hljs-title.class_,
+  .hljs-title.class_.inherited__,
+  .hljs-title.function_ {
+    color: var(--hljs-title-color);
+  }
+
+  .hljs-attr,
+  .hljs-attribute,
+  .hljs-literal,
+  .hljs-meta,
+  .hljs-number,
+  .hljs-operator,
+  .hljs-selector-attr,
+  .hljs-selector-class,
+  .hljs-selector-id,
+  .hljs-variable {
+    color: var(--hljs-attr-color);
+  }
+
+  .hljs-regexp,
+  .hljs-string,
+  .hljs-meta .hljs-string {
+    color: var(--hljs-string-color);
+  }
+
+  .hljs-comment,
+  .hljs-code,
+  .hljs-formula {
+    color: var(--hljs-comment-color);
+  }
+
+  .hljs-name,
+  .hljs-quote,
+  .hljs-selector-tag,
+  .hljs-selector-pseudo {
+    color: #22863a;
+  }
+
+  .hljs-subst {
+    color: var(--hljs-font-color);
+  }
+
+  .hljs-section {
+    color: #005cc5;
+    font-weight: bold;
+  }
+
+  .hljs-bullet {
+    color: #735c0f;
+  }
+
+  .hljs-emphasis {
+    color: var(--hljs-font-color);
+    font-style: italic;
+  }
+
+  .hljs-strong {
+    color: var(--hljs-font-color);
+    font-weight: bold;
+  }
+
+  .hljs-addition {
+    color: #22863a;
+    background-color: #f0fff4;
+  }
+
+  .hljs-deletion {
+    color: #b31d28;
+    background-color: #ffeef0;
+  }
+`;

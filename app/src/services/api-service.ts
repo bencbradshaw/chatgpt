@@ -29,7 +29,7 @@ export class ApiService {
           role: 'system',
           content: system_message
         },
-        ...history.map((item) => ({ role: item.role, content: item.content }))
+        ...history.map((item) => ({ role: item.role, content: item.content, files: item?.files ?? [] }))
       ],
       engine
     };

@@ -19,3 +19,4 @@ export const buttonsCss = css`
     background-color: var(--button-bg-color);
   }
 `;
+export default buttonsCss;

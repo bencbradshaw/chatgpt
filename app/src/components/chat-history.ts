@@ -1,5 +1,5 @@
 import type { Store } from '../state/store.js';
-import type { IChatHistory } from '../types.js';
+import type { IChatHistory, IFile } from '../types.js';
 
 import { html, LitElement, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
@@ -9,8 +9,9 @@ import hljs from './_hljs.js';
 
 import { consume, createContext } from '@lit/context';
 import { loadingIcon } from '../atomics/loading-icon.js';
-import { githubDarkDimmed } from '../styles/github-dark-dimmed.css.js';
+import themeableHljsCode from '../styles/code.css.js';
 
+import { FilesDropController } from '../atomics/files-drop-controller.js';
 import chatGptStyles from './chat-history.css.js';
 
 const renderer = new Renderer();
@@ -47,15 +48,35 @@ marked.use({ renderer });
 
 @customElement('chat-history')
 export class ChatHistory extends LitElement {
-  static styles = [githubDarkDimmed, chatGptStyles];
+  static styles = [themeableHljsCode, chatGptStyles];
   @query('textarea') textareaEl: HTMLTextAreaElement;
   @state() loading = false;
   @state() history: IChatHistory = [];
+  @state() stagedFiles: IFile[] = [];
   @consume({ context: createContext<Store>('chat-store') }) store: Store;
   subscriptions: any = [];
 
   connectedCallback() {
     super.connectedCallback();
+    new FilesDropController(this, (files) => {
+      if (files?.length) {
+        for (const file of files) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            console.log('got file content', e.target.result);
+            this.store.stagedFiles = [
+              ...this.store.stagedFiles,
+              {
+                name: file.name,
+                extension: file.name.split('.').pop(),
+                content: e.target.result as string
+              }
+            ];
+          };
+          reader.readAsText(file);
+        }
+      }
+    });
     this.subscriptions.push(
       this.store.subscribe('activeThread', (thread) => {
         this.history = thread.history;
@@ -102,6 +123,9 @@ export class ChatHistory extends LitElement {
               </button>
               ${unsafeHTML(marked.parse(item.content) as string)}
               ${item.custom ? unsafeHTML(item.custom as string) : nothing}
+              ${item.files?.length
+                ? html` <div class="files">${item.files.map((file) => html` <span> ${file.name} </span> `)}</div> `
+                : nothing}
             </p>
           `
         )}

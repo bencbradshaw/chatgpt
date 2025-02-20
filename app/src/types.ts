@@ -1,6 +1,13 @@
+export interface IFile {
+  name: string;
+  extension: string;
+  content: string;
+}
+
 export interface ChatHistoryItem {
   role: 'user' | 'assistant' | 'bot';
   content: string;
+  files?: IFile[];
   custom?: string;
 }
 export type IChatHistory = ChatHistoryItem[];

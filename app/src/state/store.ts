@@ -2,8 +2,8 @@ import type { ApiService } from '../services/api-service.js';
 
 import { StateStore, prop } from 'go-web-framework/state-store.js';
 
+import { ChatHistoryItem, Engine, IFile, Thread } from '../types.js';
 import { IDB } from './idb.js';
-import { ChatHistoryItem, Engine, Thread } from '../types.js';
 
 export class Store extends StateStore {
   private db: IDB = new IDB();
@@ -11,6 +11,7 @@ export class Store extends StateStore {
   @prop() activeThread: Thread;
   @prop() threads: Thread[] = [];
   @prop() loading = false;
+  @prop() stagedFiles: IFile[] = [];
 
   constructor(private apiService: ApiService) {
     super();
@@ -53,7 +54,8 @@ export class Store extends StateStore {
   public async submitChat(prompt: string) {
     const message: ChatHistoryItem = {
       role: 'user',
-      content: prompt
+      content: prompt,
+      files: this.stagedFiles
     };
     await this.addMessage(message);
     this.loading = true;
@@ -68,6 +70,7 @@ export class Store extends StateStore {
       this.activeThread.system_message
     );
     this.addMessage(assistantMessage);
+    this.stagedFiles = [];
     this.loading = false;
     this.#emit('loading');
     for await (const message of response) {

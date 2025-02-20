@@ -3,6 +3,11 @@ package models
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
+	Files   []struct {
+		Name      string `json:"name"`
+		Extension string `json:"extension"`
+		Content   string `json:"content"`
+	} `json:"files"`
 }
 
 type ChatRequest struct {

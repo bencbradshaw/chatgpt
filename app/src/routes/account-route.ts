@@ -1,17 +1,19 @@
-import { LitElement, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
-
-import '../atomics/floating-menu.js';
-import '../atomics/main-layout.js';
-import '../components/chat-history.js';
-import '../components/chat-input.js';
-import '../components/chat-options.js';
-import '../components/chat-provider.js';
-import '../components/chat-threads.js';
-
+import '../atomics/theme-toggle.js';
+import '../components/app-nav.js';
+import buttonsCss from '../styles/buttons.css.js';
+import inputCss from '../styles/input.css.js';
 @customElement('account-route')
 export class AccountRoute extends LitElement {
+  static styles = [inputCss, buttonsCss, css``];
   render() {
-    return html` <p>Account</p> `;
+    return html`
+      <theme-toggle> </theme-toggle>
+      <app-nav></app-nav>
+      <input placeholder="email" />
+      <input placeholder="OpenAI API Key" />
+      <button>Save</button>
+    `;
   }
 }

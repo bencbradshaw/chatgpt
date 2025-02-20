@@ -1,7 +1,10 @@
+import { consume, createContext } from '@lit/context';
 import { LitElement, css, html } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
+import { Store } from '../state/store.js';
 import { buttonsCss } from '../styles/buttons.css.js';
 import { textareaCss } from '../styles/textarea.css.js';
+import { IFile } from '../types.js';
 
 const SENDSVG = html`
   <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -12,7 +15,9 @@ const SENDSVG = html`
 @customElement('chat-input')
 class ChatInput extends LitElement {
   @property({ type: String }) placeholder = 'Type a message...';
-
+  @state() stagedFiles: IFile[] = [];
+  @consume({ context: createContext<Store>('chat-store') }) store: Store;
+  subscriptions: any = [];
   static styles = [
     buttonsCss,
     textareaCss,
@@ -60,6 +65,16 @@ class ChatInput extends LitElement {
       }
     `
   ];
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.store.subscribe('stagedFiles', (stagedFiles) => {
+      this.stagedFiles = stagedFiles;
+    });
+  }
+  #autoGrowTextArea(textarea: HTMLTextAreaElement) {
+    textarea.style.height = 'auto'; // Reset height
+    textarea.style.height = `${textarea.scrollHeight}px`; // Set to scroll height
+  }
   #emitSubmitPrompt(text: string) {
     this.dispatchEvent(new CustomEvent('submit-prompt', { detail: { text }, bubbles: true }));
   }
@@ -68,14 +83,25 @@ class ChatInput extends LitElement {
       <div class="inputs-outer">
         <div class="inputs-inner">
           <chat-options></chat-options>
+          <div
+            style="display: flex; flex-direction: column; justify-content: center; align-items: center; max-height: 100px; overflow-y: auto;">
+            ${this.stagedFiles.length
+              ? this.stagedFiles.map((one) => {
+                  return html` <p>${one.name}</p> `;
+                })
+              : ''}
+          </div>
           <textarea
             title="Enter to send. Shift+Enter for new line."
+            @input=${(e: Event) => this.#autoGrowTextArea(e.target as HTMLTextAreaElement)}
             @keydown=${(e) => {
               if (e.key === 'Enter' && e.shiftKey) return;
               if (e.key === 'Enter') {
                 e.preventDefault();
-                this.#emitSubmitPrompt(e.target.value);
-                e.target.value = '';
+                this.#emitSubmitPrompt((e.target as HTMLTextAreaElement).value);
+                (e.target as HTMLTextAreaElement).value = '';
+                const textarea = e.target as HTMLTextAreaElement;
+                this.#autoGrowTextArea(textarea); // Reset height after submit
                 return;
               }
             }}></textarea>
@@ -85,6 +111,7 @@ class ChatInput extends LitElement {
                 const textarea = this.shadowRoot.querySelector('textarea');
                 this.#emitSubmitPrompt(textarea.value);
                 textarea.value = '';
+                this.#autoGrowTextArea(textarea); // Reset height after submit
               }}>
               ${SENDSVG}
             </button>

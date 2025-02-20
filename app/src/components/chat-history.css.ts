@@ -75,7 +75,12 @@ export default css`
     max-height: 500px;
     margin: 0 auto;
   }
-
+  .files {
+    border: 1px solid var(--color-primary-500);
+    border-radius: 5px;
+    padding: 0.25rem;
+    line-height: 1rem;
+  }
   .mini-preview {
     display: flex;
     align-items: center;

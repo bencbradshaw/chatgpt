@@ -3,6 +3,7 @@ import { customElement } from 'lit/decorators.js';
 
 import '../atomics/floating-menu.js';
 import '../atomics/main-layout.js';
+import '../components/app-nav.js';
 import '../components/chat-history.js';
 import '../components/chat-input.js';
 import '../components/chat-options.js';
@@ -15,10 +16,7 @@ export class ChatRoute extends LitElement {
     return html`
       <chat-provider>
         <main-layout>
-          <div slot="header">
-            <a href="/app/">Home</a>
-            <a href="/app/account">Account</a>
-          </div>
+          <app-nav slot="header"></app-nav>
           <chat-threads slot="nav"></chat-threads>
           <chat-history></chat-history>
           <chat-input slot="footer"></chat-input>

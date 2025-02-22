@@ -1,6 +1,7 @@
 export class IDB {
   private db: IDBDatabase;
-  constructor(private dbName: string = 'chat-gpt', private stores: string[] = ['threads', 'indices']) {}
+  private version = 1;
+  constructor(private dbName: string = 'chat-gpt', private stores: string[] = ['threads', 'indices', 'keys']) {}
 
   private promisify<T>(operation: () => IDBRequest): Promise<T> {
     return new Promise<T>((resolve, reject) => {
@@ -20,15 +21,17 @@ export class IDB {
         resolve(this.db);
         return;
       }
-
-      const request = indexedDB.open(this.dbName, 1);
+      console.log('opening db');
+      const request = indexedDB.open(this.dbName, this.version);
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
         const storeNames = Array.from(db.objectStoreNames);
+        console.log('storeNames', storeNames);
         for (const store of this.stores) {
           if (!storeNames.includes(store)) {
-            if (store === 'indices') {
+            console.log('creating store', store);
+            if (store === 'indices' || store === 'keys') {
               db.createObjectStore(store);
             } else {
               db.createObjectStore(store, { keyPath: 'id', autoIncrement: true });

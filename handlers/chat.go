@@ -23,7 +23,23 @@ func HandleChatRequest(w http.ResponseWriter, r *http.Request) {
 			chatPrompt.Messages[i].Content += "\nFile: " + file.Name + "\n" + file.Content
 		}
 	}
-	authToken := os.Getenv(envOpenAiSk)
+	var authToken string
+	var endpoint string
+	switch chatPrompt.Engine {
+	case "gpt-4o", "gpt-4o-mini":
+		authToken = os.Getenv(envOpenAiSk)
+		endpoint = openAiChatEndpoint
+	default:
+		authToken = os.Getenv(envVeniceAiSk)
+		endpoint = veniceAiChatEndpoint
+	}
+
+	if authToken == "" {
+		respondWithError(w, "API key not set. set at least 2 keys. export OPEN_AI_SK=THEKEY and export VENICE_AI_SK=THEKEY", http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("Got Model", chatPrompt.Engine)
 
 	chatRequest := models.ChatRequest{
 		Model:    chatPrompt.Engine,
@@ -31,7 +47,7 @@ func HandleChatRequest(w http.ResponseWriter, r *http.Request) {
 		Messages: chatPrompt.Messages,
 	}
 
-	resp, err := doPostRequest(openAiChatEndpoint, chatRequest, authToken)
+	resp, err := doPostRequest(endpoint, chatRequest, authToken)
 	if err != nil {
 		respondWithError(w, "Error making a request to OpenAI API: "+err.Error(), http.StatusInternalServerError)
 		return

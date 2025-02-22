@@ -80,6 +80,14 @@ export class ChatOptions extends LitElement {
             }}>
             <option value="gpt-4o-mini">4o mini</option>
             <option value="gpt-4o">4o</option>
+            <option value="llama-3.3-70b">Llama 3.3 70B</option>
+            <option value="llama-3.2-3b">Llama 3.2 3B</option>
+            <option value="dolphin-2.9.2-qwen2-72b">Dolphin 2.9.2 Qwen2 72B</option>
+            <option value="llama-3.1-405b">Llama 3.1 405B</option>
+            <option value="qwen2.5-coder-32b">Qwen 2.5 Coder 32B</option>
+            <option value="deepseek-r1-671b">Deepseek R1 671B</option>
+            <option value="deepseek-r1-llama-70b">Deepseek R1 Llama 70B</option>
+            <option value="qwen-2.5-vl">Qwen 2.5 VL</option>
           </select>
           
           <textarea

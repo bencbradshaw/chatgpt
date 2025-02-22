@@ -3,6 +3,7 @@ import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { Store } from '../state/store.js';
 import { buttonsCss } from '../styles/buttons.css.js';
+import pillCss from '../styles/pill.css.js';
 import { textareaCss } from '../styles/textarea.css.js';
 import { IFile } from '../types.js';
 
@@ -21,6 +22,7 @@ class ChatInput extends LitElement {
   static styles = [
     buttonsCss,
     textareaCss,
+    pillCss,
     css`
       :host {
         max-width: 100%;
@@ -35,6 +37,17 @@ class ChatInput extends LitElement {
         align-items: center;
         justify-content: center;
         padding: 0.5rem 0;
+        .files {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+          align-items: flex-start;
+          max-height: 5rem;
+          overflow-y: auto;
+          width: 830px;
+          margin: 0 auto;
+        }
       }
       .inputs-inner {
         display: flex;
@@ -81,16 +94,15 @@ class ChatInput extends LitElement {
   render() {
     return html`
       <div class="inputs-outer">
+        <div class="files">
+          ${this.stagedFiles.length
+            ? this.stagedFiles.map((one) => {
+                return html` <span class="pill">${one.name}</span> `;
+              })
+            : ''}
+        </div>
         <div class="inputs-inner">
           <chat-options></chat-options>
-          <div
-            style="display: flex; flex-direction: column; justify-content: center; align-items: center; max-height: 100px; overflow-y: auto;">
-            ${this.stagedFiles.length
-              ? this.stagedFiles.map((one) => {
-                  return html` <p>${one.name}</p> `;
-                })
-              : ''}
-          </div>
           <textarea
             title="Enter to send. Shift+Enter for new line."
             @input=${(e: Event) => this.#autoGrowTextArea(e.target as HTMLTextAreaElement)}

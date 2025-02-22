@@ -12,6 +12,7 @@ import { loadingIcon } from '../atomics/loading-icon.js';
 import themeableHljsCode from '../styles/code.css.js';
 
 import { FilesDropController } from '../atomics/files-drop-controller.js';
+import pillCss from '../styles/pill.css.js';
 import chatGptStyles from './chat-history.css.js';
 
 const renderer = new Renderer();
@@ -48,7 +49,7 @@ marked.use({ renderer });
 
 @customElement('chat-history')
 export class ChatHistory extends LitElement {
-  static styles = [themeableHljsCode, chatGptStyles];
+  static styles = [themeableHljsCode, pillCss, chatGptStyles];
   @query('textarea') textareaEl: HTMLTextAreaElement;
   @state() loading = false;
   @state() history: IChatHistory = [];
@@ -63,7 +64,6 @@ export class ChatHistory extends LitElement {
         for (const file of files) {
           const reader = new FileReader();
           reader.onload = (e) => {
-            console.log('got file content', e.target.result);
             this.store.stagedFiles = [
               ...this.store.stagedFiles,
               {
@@ -124,7 +124,12 @@ export class ChatHistory extends LitElement {
               ${unsafeHTML(marked.parse(item.content) as string)}
               ${item.custom ? unsafeHTML(item.custom as string) : nothing}
               ${item.files?.length
-                ? html` <div class="files">${item.files.map((file) => html` <span> ${file.name} </span> `)}</div> `
+                ? html`
+                    <p style="margin: 0; padding: 0">Attached Files:</p>
+                    <div class="files">
+                      ${item.files.map((file) => html` <span class="pill"> ${file.name} </span> `)}
+                    </div>
+                  `
                 : nothing}
             </p>
           `

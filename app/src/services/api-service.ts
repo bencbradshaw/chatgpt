@@ -3,7 +3,6 @@ import { TextEventStream } from './text-event-stream.js';
 
 export class ApiService {
   static async post(endpoint: string, body: any): Promise<Response> {
-    console.log(body);
     let headers = {};
     if (body instanceof FormData) {
       headers = {

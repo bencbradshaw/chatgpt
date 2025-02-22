@@ -76,10 +76,11 @@ export default css`
     margin: 0 auto;
   }
   .files {
-    border: 1px solid var(--color-primary-500);
-    border-radius: 5px;
-    padding: 0.25rem;
-    line-height: 1rem;
+    padding: 0.25rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: flex-start;
   }
   .mini-preview {
     display: flex;

@@ -12,6 +12,7 @@ export class Store extends StateStore {
   @prop() threads: Thread[] = [];
   @prop() loading = false;
   @prop() stagedFiles: IFile[] = [];
+  openAiSk = '';
 
   constructor(private apiService: ApiService) {
     super();
@@ -34,12 +35,18 @@ export class Store extends StateStore {
       await this.db.put('indices', threadId, 'activeThreadId');
     }
     this.activeThreadId = (await this.db.get('indices', 'activeThreadId')) || 0;
-    console.log('stroe activeThreadId', this.activeThreadId);
+    console.log('store activeThreadId', this.activeThreadId);
     this.threads = await this.db.getAll('threads');
     this.activeThread = {
       id: this.activeThreadId,
       ...(await this.db.get<Thread>('threads', this.activeThreadId))
     };
+    this.openAiSk = (await this.db.get('keys', 'open_ai_sk')) ?? '';
+  }
+
+  setOpenAiSk(openAiSk: string) {
+    this.openAiSk = openAiSk;
+    this.db.put('keys', openAiSk, 'open_ai_sk');
   }
 
   #emit = (key: string) => {

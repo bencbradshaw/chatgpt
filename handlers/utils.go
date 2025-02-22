@@ -14,12 +14,14 @@ import (
 
 const (
 	openAiBaseUrl        = "https://api.openai.com/v1"
+	veniceAiBaseUrl      = "https://api.venice.ai/api/v1"
 	openAiChatEndpoint   = openAiBaseUrl + "/chat/completions"
-	openAiImageEndpoint  = openAiBaseUrl + "/images/generations"
+	veniceAiChatEndpoint = veniceAiBaseUrl + "/chat/completions"
 	contentTypeHeader    = "Content-Type"
 	contentTypeJSON      = "application/json"
 	authHeaderFmt        = "Bearer %s"
 	envOpenAiSk          = "OPEN_AI_SK"
+	envVeniceAiSk        = "VENICE_AI_SK"
 	accessControlAllow   = "Access-Control-Allow-Origin"
 	accessControlHeaders = "Access-Control-Allow-Headers"
 )

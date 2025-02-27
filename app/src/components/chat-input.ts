@@ -1,6 +1,7 @@
 import { consume, createContext } from '@lit/context';
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { FilesDropController } from '../atomics/files-drop-controller.js';
 import { Store } from '../state/store.js';
 import { buttonsCss } from '../styles/buttons.css.js';
 import pillCss from '../styles/pill.css.js';
@@ -83,6 +84,24 @@ class ChatInput extends LitElement {
     this.store.subscribe('stagedFiles', (stagedFiles) => {
       this.stagedFiles = stagedFiles;
     });
+    new FilesDropController(this, (files) => {
+      if (files?.length) {
+        for (const file of files) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            this.store.stagedFiles = [
+              ...this.store.stagedFiles,
+              {
+                name: file.name,
+                extension: file.name.split('.').pop(),
+                content: e.target.result as string
+              }
+            ];
+          };
+          reader.readAsText(file);
+        }
+      }
+    });
   }
   #autoGrowTextArea(textarea: HTMLTextAreaElement) {
     textarea.style.height = 'auto'; // Reset height
@@ -90,6 +109,7 @@ class ChatInput extends LitElement {
   }
   #emitSubmitPrompt(text: string) {
     this.dispatchEvent(new CustomEvent('submit-prompt', { detail: { text }, bubbles: true }));
+    this.store.stagedFiles = [];
   }
   render() {
     return html`
@@ -105,6 +125,9 @@ class ChatInput extends LitElement {
           <chat-options></chat-options>
           <textarea
             title="Enter to send. Shift+Enter for new line."
+            @drop=${(e: DragEvent) => {
+              e.preventDefault();
+            }}
             @input=${(e: Event) => this.#autoGrowTextArea(e.target as HTMLTextAreaElement)}
             @keydown=${(e) => {
               if (e.key === 'Enter' && e.shiftKey) return;

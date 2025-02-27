@@ -119,6 +119,8 @@ export default css`
     margin: 0;
     padding: 0;
     width: auto;
+    color: var(--font-primary);
+    background-color: var(--button-bg-color);
   }
   button.delete {
     background-color: transparent;

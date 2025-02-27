@@ -16,8 +16,18 @@ export class AppRoot extends LitElement {
     super.connectedCallback();
     const router = new Router(this);
     router.baseUrl = '/app';
-    router.addRoute('/', 'chat-route', () => import('./routes/chat-route.js'));
-    router.addRoute('/account', 'account-route', () => import('./routes/account-route.js'));
+    router.addRoute({
+      path: '/',
+      component: 'chat-route',
+      importer: () => import('./routes/chat-route.js'),
+      title: 'Chat'
+    });
+    router.addRoute({
+      path: '/account',
+      component: 'account-route',
+      importer: () => import('./routes/account-route.js'),
+      title: 'Account'
+    });
     router.navigate(window.location.pathname);
   }
 }

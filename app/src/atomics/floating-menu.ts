@@ -27,13 +27,21 @@ export class FloatingMenu extends LitElement {
     popoverEl.hidePopover();
   }
 
+  #listenForClose = (e: Event) => {
+    const composedPath = e.composedPath();
+    if (!composedPath.includes(this)) {
+      this.close();
+      document.removeEventListener('keyup', this.#listenForClose);
+    }
+  };
+
   #handleClicked(e: PointerEvent) {
     e.stopPropagation();
-
     if (this.opened) {
       this.close();
       return;
     }
+    document.addEventListener('keyup', this.#listenForClose);
     const popoverEl = this.shadowRoot.querySelector('#menu') as HTMLElement;
     const invoker = this.shadowRoot.querySelector('#target') as HTMLElement;
     const invokerRect = invoker.getBoundingClientRect();

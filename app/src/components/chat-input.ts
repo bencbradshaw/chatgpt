@@ -108,6 +108,7 @@ class ChatInput extends LitElement {
     textarea.style.height = `${textarea.scrollHeight}px`; // Set to scroll height
   }
   #emitSubmitPrompt(text: string) {
+    if (!text.trim()) return;
     this.dispatchEvent(new CustomEvent('submit-prompt', { detail: { text }, bubbles: true }));
     this.store.stagedFiles = [];
   }

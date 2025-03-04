@@ -169,4 +169,10 @@ export class Store extends StateStore {
     await this.db.put('threads', this.activeThread);
     this.#emit('activeThread');
   }
+  updateThreadName(threadId: IDBValidKey, name: string) {
+    const thread = this.threads.find((t) => t.id === threadId);
+    thread.headline = name;
+    this.db.put('threads', thread);
+    this.#emit('activeThread');
+  }
 }

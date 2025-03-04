@@ -15,6 +15,7 @@
     --color-primary-300: #d9d9d9;
     --color-primary-400: #bfbfbf;
     --color-primary-500: #a6a6a6;
+    --color-accent-100: #005fcb;
     --primary-font-color: #000000;
     --primary-bg-color: var(--color-primary-100);
     --chatbox-bg-color: var(--color-primary-200);
@@ -45,6 +46,7 @@
     --color-primary-300: #3e4451;
     --color-primary-400: #5e687e;
     --color-primary-500: #7b8a9a;
+    --color-accent-100: #005fcb;
     --primary-font-color: #ffffff;
     --primary-bg-color: var(--color-primary-100);
     --chatbox-bg-color: var(--color-primary-200);

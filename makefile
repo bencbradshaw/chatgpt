@@ -1,5 +1,6 @@
 .PHONY: run
 run:
+	rm -rf static
 	go run main.go --dev
 build:
 	cd app && npm run tsc && cd ..

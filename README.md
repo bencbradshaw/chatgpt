@@ -4,6 +4,7 @@ add:
 
 ```text
 OPEN_AI_SK=your_open_ai_sk
+VENICE_AI_SK=your_venice_ai_sk
 ```
 
 ## install go dependencies
@@ -31,4 +32,5 @@ make
 make build
 ```
 
-- note that the /static dir is not included into the executable, so if placing the executable somewhere, like a server, the static dir needs to be copied over with it, and placed in the same dir as the executable.
+- macos build is in the public folder
+- linux build is in the linux folder

@@ -9,25 +9,6 @@ import (
 	"github.com/evanw/esbuild/pkg/api"
 )
 
-var params = framework.InitParams{
-	EsbuildOpts: api.BuildOptions{
-		EntryPoints: []string{"./app/src/index.ts"},
-	},
-	AutoRegisterTemplateRoutes: true,
-}
-
-func main() {
-	if os.Getenv("BUILD") == "true" {
-		framework.Build(params)
-		print("Build complete \n")
-		return
-	}
-	mux := framework.Run(params)
-	mux.Handle("/api/chat", cors(handlers.HandleChatRequest))
-	print("Server started at http://localhost:2025 \n")
-	http.ListenAndServe(":2025", mux)
-}
-
 func cors(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		res.Header().Set("Access-Control-Allow-Origin", "*")
@@ -39,4 +20,32 @@ func cors(next http.HandlerFunc) http.HandlerFunc {
 		}
 		next.ServeHTTP(res, req)
 	})
+}
+
+func main() {
+	if os.Getenv("BUILD") == "true" {
+		buildParams := framework.InitParams{
+			EsbuildOpts: api.BuildOptions{
+				EntryPoints:       []string{"./app/src/index.ts"},
+				MinifyWhitespace:  true,
+				MinifyIdentifiers: true,
+				MinifySyntax:      true,
+				Sourcemap:         api.SourceMapNone,
+			},
+			AutoRegisterTemplateRoutes: true,
+		}
+		framework.Build(buildParams)
+		print("Build complete \n")
+		return
+	}
+	mux := framework.Run(framework.InitParams{
+		IsDevMode: true,
+		EsbuildOpts: api.BuildOptions{
+			EntryPoints: []string{"./app/src/index.ts"},
+		},
+		AutoRegisterTemplateRoutes: true,
+	})
+	mux.Handle("/api/chat", cors(handlers.HandleChatRequest))
+	print("Server started at http://localhost:2025 \n")
+	http.ListenAndServe(":2025", mux)
 }

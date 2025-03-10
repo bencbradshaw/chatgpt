@@ -35,7 +35,7 @@ export class ChatThreads extends LitElement {
             align-items: center;
             p {
               margin: 0;
-              padding: 0;
+              padding: 0 0 0 0.25rem;
               font-size: 1rem;
               font-weight: 500;
               // no select
@@ -153,11 +153,10 @@ export class ChatThreads extends LitElement {
       <section upper>
         ${this.threads.map((thread, i) => {
           return html`
-            <div class="thread">
+            <div class="thread" @click=${() => this.store.selectThread(thread.id)}>
               <p
                 id=${'thread-' + thread.id}
                 class="${this.activeThreadId === thread.id ? 'active' : ''}"
-                @click=${() => this.store.selectThread(thread.id)}
                 @blur=${this.#handleBlur}
                 @keypress=${this.#handleKeyPress}>
                 ${this.sliceHeadline(thread.headline)}
@@ -171,8 +170,20 @@ export class ChatThreads extends LitElement {
                   </svg>
                 </button>
                 <div class="menu">
-                  <button @click=${(e) => this.#handleRename(thread)}>rename</button>
-                  <button @click=${() => this.store.deleteThread(thread.id)}>delete</button>
+                  <button
+                    @click=${(e) => {
+                      e.stopPropagation();
+                      this.#handleRename(thread);
+                    }}>
+                    rename
+                  </button>
+                  <button
+                    @click=${(e) => {
+                      e.stopPropagation();
+                      this.store.deleteThread(thread.id);
+                    }}>
+                    delete
+                  </button>
                 </div>
               </floating-menu>
             </div>

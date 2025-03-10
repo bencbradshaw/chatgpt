@@ -11,7 +11,9 @@ import { consume, createContext } from '@lit/context';
 import { loadingIcon } from '../atomics/loading-icon.js';
 import themeableHljsCode from '../styles/code.css.js';
 
+import katex from 'katex';
 import { FilesDropController } from '../atomics/files-drop-controller.js';
+import katexStyles from '../styles/katex.css.js';
 import pillCss from '../styles/pill.css.js';
 import chatGptStyles from './chat-history.css.js';
 
@@ -45,11 +47,50 @@ renderer.code = function ({ text, lang }: Tokens.Code): string {
   `;
 };
 
+let mathBuffer = '';
+let isCollectingMath = false;
+
+renderer.text = ({ text, raw }: Tokens.Text) => {
+  if (raw === '\\[') {
+    isCollectingMath = true;
+    mathBuffer = '';
+    return '';
+  }
+
+  if (raw === '\\]' && isCollectingMath) {
+    isCollectingMath = false;
+    try {
+      const rendered = katex.renderToString(mathBuffer, { throwOnError: false });
+      return rendered;
+    } catch (error) {
+      console.error('KaTeX rendering error:', error);
+      return `[${mathBuffer}]`;
+    } finally {
+      mathBuffer = '';
+    }
+  }
+
+  if (isCollectingMath) {
+    mathBuffer += text;
+    return '';
+  }
+
+  const squareBracketMathRegex = /\[(.*?)\]/g;
+  return text.replace(squareBracketMathRegex, (match, p1) => {
+    try {
+      return katex.renderToString(p1, { throwOnError: false });
+    } catch (error) {
+      console.error('KaTeX rendering error:', error);
+      return match;
+    }
+  });
+};
+
 marked.use({ renderer });
 
 @customElement('chat-history')
 export class ChatHistory extends LitElement {
-  static styles = [themeableHljsCode, pillCss, chatGptStyles];
+  static styles = [themeableHljsCode, katexStyles, pillCss, chatGptStyles];
   @query('textarea') textareaEl: HTMLTextAreaElement;
   @state() loading = false;
   @state() history: IChatHistory = [];

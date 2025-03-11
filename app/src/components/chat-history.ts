@@ -8,11 +8,10 @@ import { marked, Renderer, Tokens } from 'marked';
 import hljs from './_hljs.js';
 
 import { consume, createContext } from '@lit/context';
-import { loadingIcon } from '../atomics/loading-icon.js';
-import themeableHljsCode from '../styles/code.css.js';
-
 import katex from 'katex';
 import { FilesDropController } from '../atomics/files-drop-controller.js';
+import { loadingIcon } from '../atomics/loading-icon.js';
+import themeableHljsCode from '../styles/code.css.js';
 import katexStyles from '../styles/katex.css.js';
 import pillCss from '../styles/pill.css.js';
 import chatGptStyles from './chat-history.css.js';
@@ -46,46 +45,66 @@ renderer.code = function ({ text, lang }: Tokens.Code): string {
     <pre><code class="hljs ${lang}">${highlighted}</code></pre>
   `;
 };
+// manually change to true to enable KaTeX math rendering
+// currently it conflicts with some markdown rendering, so only enable if needed
+if (false) {
+  let mathBuffer = '';
+  let isCollectingMath = false;
+  let mathStartToken = '';
 
-let mathBuffer = '';
-let isCollectingMath = false;
-
-renderer.text = ({ text, raw }: Tokens.Text) => {
-  if (raw === '\\[') {
-    isCollectingMath = true;
-    mathBuffer = '';
-    return '';
-  }
-
-  if (raw === '\\]' && isCollectingMath) {
-    isCollectingMath = false;
-    try {
-      const rendered = katex.renderToString(mathBuffer, { throwOnError: false });
-      return rendered;
-    } catch (error) {
-      console.error('KaTeX rendering error:', error);
-      return `[${mathBuffer}]`;
-    } finally {
+  renderer.text = ({ text, raw }: Tokens.Text) => {
+    if (raw === '\\[' || raw === '\\(') {
+      isCollectingMath = true;
+      mathStartToken = raw;
       mathBuffer = '';
+      return '';
     }
-  }
 
-  if (isCollectingMath) {
-    mathBuffer += text;
-    return '';
-  }
-
-  const squareBracketMathRegex = /\[(.*?)\]/g;
-  return text.replace(squareBracketMathRegex, (match, p1) => {
-    try {
-      return katex.renderToString(p1, { throwOnError: false });
-    } catch (error) {
-      console.error('KaTeX rendering error:', error);
-      return match;
+    if ((raw === '\\]' || raw === '\\)') && isCollectingMath) {
+      if ((mathStartToken === '\\[' && raw === '\\]') || (mathStartToken === '\\(' && raw === '\\)')) {
+        isCollectingMath = false;
+        try {
+          const rendered = katex.renderToString(mathBuffer, { throwOnError: false });
+          return rendered;
+        } catch (error) {
+          console.error('KaTeX rendering error:', error);
+          return `[${mathBuffer}]`;
+        } finally {
+          mathBuffer = '';
+          mathStartToken = '';
+        }
+      }
     }
-  });
-};
 
+    if (isCollectingMath) {
+      mathBuffer += text;
+      return '';
+    }
+
+    const inlineMathRegex = /\\\((.*?)\\\)/g;
+    const squareBracketMathRegex = /\[(.*?)\]/g;
+
+    text = text.replace(inlineMathRegex, (match, p1) => {
+      try {
+        return katex.renderToString(p1, { throwOnError: false });
+      } catch (error) {
+        console.error('KaTeX rendering error:', error);
+        return match;
+      }
+    });
+
+    text = text.replace(squareBracketMathRegex, (match, p1) => {
+      try {
+        return katex.renderToString(p1, { throwOnError: false });
+      } catch (error) {
+        console.error('KaTeX rendering error:', error);
+        return match;
+      }
+    });
+
+    return text;
+  };
+}
 marked.use({ renderer });
 
 @customElement('chat-history')

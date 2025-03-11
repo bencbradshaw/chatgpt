@@ -140,6 +140,16 @@ export default css`
   button.delete:hover {
     background-color: #a01f1f9c;
   }
+  a {
+    color: var(--color-accent-100);
+    text-decoration: underline;
+    &:hover {
+      color: var(--color-accent-200);
+    }
+    &:visited {
+      color: var(--color-accent-200);
+    }
+  }
   pre {
     margin-top: 0;
   }

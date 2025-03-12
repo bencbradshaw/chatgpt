@@ -2,7 +2,7 @@ import type { ApiService } from '../services/api-service.js';
 
 import { StateStore, prop } from 'go-web-framework/state-store.js';
 
-import { ChatHistoryItem, Engine, IFile, Thread } from '../types.js';
+import { ChatHistoryItem, Engine, IFile, SystemMessage, Thread } from '../types.js';
 import { IDB } from './idb.js';
 
 export class Store extends StateStore {
@@ -12,7 +12,7 @@ export class Store extends StateStore {
   @prop() threads: Thread[] = [];
   @prop() loading = false;
   @prop() stagedFiles: IFile[] = [];
-  openAiSk = '';
+  @prop() systemMessages: SystemMessage[] = [];
 
   constructor(private apiService: ApiService) {
     super();
@@ -41,12 +41,7 @@ export class Store extends StateStore {
       id: this.activeThreadId,
       ...(await this.db.get<Thread>('threads', this.activeThreadId))
     };
-    this.openAiSk = (await this.db.get('keys', 'open_ai_sk')) ?? '';
-  }
-
-  setOpenAiSk(openAiSk: string) {
-    this.openAiSk = openAiSk;
-    this.db.put('keys', openAiSk, 'open_ai_sk');
+    this.systemMessages = await this.db.getAll<SystemMessage>('system_messages');
   }
 
   #emit = (key: string) => {
@@ -169,10 +164,20 @@ export class Store extends StateStore {
     await this.db.put('threads', this.activeThread);
     this.#emit('activeThread');
   }
+
   updateThreadName(threadId: IDBValidKey, name: string) {
     const thread = this.threads.find((t) => t.id === threadId);
     thread.headline = name;
     this.db.put('threads', thread);
     this.#emit('activeThread');
+  }
+
+  async saveSystemMessage(message: string) {
+    const createdId = await this.db.add('system_messages', { text: message });
+    this.systemMessages = await this.db.getAll<SystemMessage>('system_messages');
+  }
+  async updateSystemMessage(message: SystemMessage) {
+    await this.db.put('system_messages', message);
+    this.systemMessages = await this.db.getAll<SystemMessage>('system_messages');
   }
 }

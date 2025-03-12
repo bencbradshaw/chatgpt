@@ -21,3 +21,7 @@ export interface Thread {
   include_context: boolean;
   history: IChatHistory;
 }
+export interface SystemMessage {
+  id: IDBValidKey;
+  text: string;
+}

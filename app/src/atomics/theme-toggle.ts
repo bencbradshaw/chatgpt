@@ -30,7 +30,7 @@ export class ThemeToggle extends LitElement {
     buttonsCss,
     css`
       :host {
-        display: block;
+        display: inline;
       }
 
       .toggle-btn {

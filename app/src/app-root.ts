@@ -28,6 +28,12 @@ export class AppRoot extends LitElement {
       importer: () => import('./routes/account-route.js'),
       title: 'Account'
     });
+    router.addRoute({
+      path: '/system-messages',
+      component: 'system-messages',
+      importer: () => import('./routes/system-messages-route.js'),
+      title: 'System Messages'
+    });
     router.navigate(window.location.pathname);
   }
 }

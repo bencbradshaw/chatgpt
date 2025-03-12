@@ -1,7 +1,10 @@
 export class IDB {
   private db: IDBDatabase;
-  private version = 1;
-  constructor(private dbName: string = 'chat-gpt', private stores: string[] = ['threads', 'indices', 'keys']) {}
+  private version = 2;
+  constructor(
+    private dbName: string = 'chat-gpt',
+    private stores: string[] = ['threads', 'indices', 'keys', 'system_messages']
+  ) {}
 
   private promisify<T>(operation: () => IDBRequest): Promise<T> {
     return new Promise<T>((resolve, reject) => {
@@ -17,20 +20,14 @@ export class IDB {
 
   open(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      if (this.db) {
-        resolve(this.db);
-        return;
-      }
       console.log('opening db');
-      const request = indexedDB.open(this.dbName, this.version);
+      const openRequest = indexedDB.open(this.dbName, this.version);
 
-      request.onupgradeneeded = (event) => {
+      openRequest.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
         const storeNames = Array.from(db.objectStoreNames);
-        console.log('storeNames', storeNames);
         for (const store of this.stores) {
           if (!storeNames.includes(store)) {
-            console.log('creating store', store);
             if (store === 'indices' || store === 'keys') {
               db.createObjectStore(store);
             } else {
@@ -40,12 +37,9 @@ export class IDB {
         }
       };
 
-      request.onerror = () => {
-        reject(request.error);
-      };
-
-      request.onsuccess = () => {
-        this.db = request.result;
+      openRequest.onerror = () => reject(openRequest.error);
+      openRequest.onsuccess = () => {
+        this.db = openRequest.result;
         resolve(this.db);
       };
     });

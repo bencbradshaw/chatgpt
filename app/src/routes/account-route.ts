@@ -9,13 +9,23 @@ import buttonsCss from '../styles/buttons.css.js';
 import inputCss from '../styles/input.css.js';
 @customElement('account-route')
 export class AccountRoute extends LitElement {
-  static styles = [inputCss, buttonsCss, css``];
+  static styles = [
+    inputCss,
+    buttonsCss,
+    css`
+      :host {
+        display: flex;
+        flex-direction: column;
+        width: 100vw;
+        height: 100vh;
+      }
+    `
+  ];
   apiService = new ApiService();
   @provide({ context: createContext('chat-store') }) store: Store = new Store(this.apiService);
 
   saveSk() {
     const sk = this.shadowRoot.querySelector<HTMLInputElement>('input[placeholder="OpenAI API Key"]').value;
-    this.store.setOpenAiSk(sk);
   }
 
   render() {

@@ -1,16 +1,20 @@
 import { LitElement, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
-import inputStyles from '../styles/input.css.js';
-import typography from '../styles/typography.js';
+import buttonsCss from '../styles/buttons.css.js';
 
 @customElement('app-nav')
 class AppNav extends LitElement {
-  static styles = [inputStyles, typography];
+  static styles = [buttonsCss];
   render() {
-    return html`<div slot="header">
-      <a href="/app/">Chat</a>
-      <a href="/app/account">Account</a>
-      <a href="/app/system-messages">System Messages</a>
-    </div>`;
+    return html`
+      <a href="/app/">
+        <button class="tab ${window.router.activeRoute.path === '/app/' ? 'active' : ''}">Chat</button>
+      </a>
+      <a href="/app/system-messages">
+        <button class="tab ${window.router.activeRoute.path === '/app/system-messages' ? 'active' : ''}">
+          System Messages
+        </button>
+      </a>
+    `;
   }
 }

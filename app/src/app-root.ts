@@ -10,6 +10,12 @@ import './components/chat-options.js';
 import './components/chat-provider.js';
 import './components/chat-threads.js';
 
+declare global {
+  interface Window {
+    router: Router;
+  }
+}
+
 @customElement('app-root')
 export class AppRoot extends LitElement {
   connectedCallback(): void {
@@ -23,17 +29,12 @@ export class AppRoot extends LitElement {
       title: 'Chat'
     });
     router.addRoute({
-      path: '/account',
-      component: 'account-route',
-      importer: () => import('./routes/account-route.js'),
-      title: 'Account'
-    });
-    router.addRoute({
       path: '/system-messages',
       component: 'system-messages',
       importer: () => import('./routes/system-messages-route.js'),
       title: 'System Messages'
     });
     router.navigate(window.location.pathname);
+    window.router = router;
   }
 }

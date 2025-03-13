@@ -180,4 +180,8 @@ export class Store extends StateStore {
     await this.db.put('system_messages', message);
     this.systemMessages = await this.db.getAll<SystemMessage>('system_messages');
   }
+  async deleteSystemMessage(id: IDBValidKey) {
+    await this.db.delete('system_messages', id);
+    this.systemMessages = await this.db.getAll<SystemMessage>('system_messages');
+  }
 }

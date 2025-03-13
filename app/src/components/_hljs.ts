@@ -30,6 +30,7 @@ hljs.registerLanguage('go', go);
 hljs.registerLanguage('css', css);
 hljs.registerLanguage('xml', xml);
 hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('cmd', bash);
 hljs.registerLanguage('python', python);
 hljs.registerLanguage('cpp', cpp);
 hljs.registerLanguage('sql', sql);

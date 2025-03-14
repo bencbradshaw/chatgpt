@@ -16,6 +16,7 @@ export class PageLayout extends LitElement {
     }
 
     header {
+      padding-left: 192px;
       grid-row: 1 / 2;
     }
 

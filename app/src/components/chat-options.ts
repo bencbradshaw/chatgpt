@@ -5,12 +5,20 @@ import { FloatingMenu } from '../atomics/floating-menu.js';
 import type { Store } from '../state/store.js';
 import { buttonsCss } from '../styles/buttons.css.js';
 import { textareaCss } from '../styles/textarea.css.js';
-import { Thread } from '../types.js';
-
+import typography from '../styles/typography.js';
+import { SystemMessage, Thread } from '../types.js';
+const threeDotSvg = html`
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="5" r="2" fill="currentColor" />
+    <circle cx="12" cy="12" r="2" fill="currentColor" />
+    <circle cx="12" cy="19" r="2" fill="currentColor" />
+  </svg>
+`;
 export class ChatOptions extends LitElement {
   static styles = [
     buttonsCss,
     textareaCss,
+    typography,
     css`
       button[slot='invoker'] {
         display: flex;
@@ -27,13 +35,54 @@ export class ChatOptions extends LitElement {
         background-color: var(--color-primary-100);
         padding: 1rem;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: 12px;
         select {
           margin: 0 5px;
         }
         textarea {
           margin: 0 5px;
+        }
+      }
+      dialog {
+        border: 1px solid black;
+        outline: none;
+        background-color: var(--color-primary-100);
+        color: var(--primary-font-color);
+        min-width: 400px;
+        max-width: 800px;
+        padding: 0;
+        .wrapper {
+          display: flex;
+          flex-direction: column;
+          padding: 0;
+          .scrollable {
+            align-self: stretch;
+            flex-direction: column;
+            align-items: stretch;
+            justify-items: flex-start;
+            overflow-y: auto;
+            max-height: 500px;
+            p {
+              cursor: pointer;
+              &.active {
+                background-color: var(--color-accent-100);
+                color: var(--primary-font-color);
+              }
+            }
+          }
+          .buttons {
+            align-self: stretch;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-end;
+          }
+        }
+        &::backdrop {
+          background-color: rgba(0, 0, 0, 0.5);
         }
       }
     `
@@ -45,6 +94,7 @@ export class ChatOptions extends LitElement {
   systemMessage = sessionStorage.getItem('system_message') ?? `Your name is ChatGPT. You are a helpful assistant.`;
   @state() thread: Thread;
   @state() activeThreadId: IDBValidKey;
+  @state() stagedSystemMessage: SystemMessage;
   sub1: { unsubscribe: () => void };
   @consume({ context: createContext<Store>('chat-store') }) store: Store;
   connectedCallback() {
@@ -65,11 +115,7 @@ export class ChatOptions extends LitElement {
     return html`
         <floating-menu position="top">
           <button slot="invoker">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="5" r="2" fill="currentColor"/>
-              <circle cx="12" cy="12" r="2" fill="currentColor"/>
-              <circle cx="12" cy="19" r="2" fill="currentColor"/>
-            </svg>
+            ${threeDotSvg}
           </button>
           <div>
             <select
@@ -91,23 +137,53 @@ export class ChatOptions extends LitElement {
           </select>
           
           <textarea
-          type="text"
-          placeholder="System Message"
-          .value=${this.thread.system_message}
-          style="width: 300px; height: 16px;"
-          @input=${(e) => {
-            this.store.updateThread({ system_message: e.target.value });
-          }}
-          @keydown=${(e) => {
-            if (e.key === 'Enter') {
-              const floatingMenu = this.shadowRoot.querySelector('floating-menu') as FloatingMenu;
-              floatingMenu.close();
-            }
-          }} />
+            type="text"
+            placeholder="System Message"
+            .value=${this.thread.system_message}
+            style="width: 300px; height: 16px;"
+            @input=${(e) => {
+              this.store.updateThread({ system_message: e.target.value });
+            }}
+            @keydown=${(e) => {
+              if (e.key === 'Enter') {
+                const floatingMenu = this.shadowRoot.querySelector('floating-menu') as FloatingMenu;
+                floatingMenu.close();
+              }
+            }} />
             </textarea>
-            
+            <button @click=${() => this.shadowRoot.querySelector('dialog').showModal()}>
+            ${threeDotSvg}
+          </button>
           </div>
         </floating-menu>
+        <dialog>
+          <div class="wrapper">
+            <div class="scrollable">
+
+              ${this.store.systemMessages.map((message) => {
+                return html`<p
+                  class=${this.stagedSystemMessage === message ? 'active' : ''}
+                  @click=${() => {
+                    this.stagedSystemMessage = message;
+                  }}>
+                  ${message.text}
+                </p>`;
+              })}
+              </div>
+              <div class="buttons">
+              <button @click=${() => this.shadowRoot.querySelector('dialog').close()}>Cancel</button>
+
+                <button
+                @click=${() => {
+                  this.store.updateThread({ system_message: this.stagedSystemMessage.text });
+                  this.shadowRoot.querySelector('dialog').close();
+                  this.stagedSystemMessage = null;
+                }}>
+                Select
+              </button>
+              </div>
+      </div>
+        </dialog>
     `;
   }
 }

@@ -68,6 +68,7 @@ export class ChatThreads extends LitElement {
               flex-direction: column;
               padding: 0.5rem 0.25rem;
               gap: 0.5rem;
+              background-color: var(--color-primary-100);
             }
           }
           .active {
@@ -191,9 +192,7 @@ export class ChatThreads extends LitElement {
         })}
         <button class="new-thread" @click=${() => this.store.createNewThread()}>new thread</button>
       </section>
-      <section lower>
-        <theme-toggle> </theme-toggle>
-      </section>
+      <section lower></section>
     `;
   }
 }

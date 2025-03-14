@@ -36,8 +36,7 @@ export class SystemMessages extends LitElement {
       }
 
       .header {
-        margin: 0 0 0 190px;
-        padding-bottom: 0.5rem;
+        padding-bottom: 0;
         display: flex;
         & > * {
           margin-right: 0.5rem;
@@ -184,7 +183,6 @@ export class SystemMessages extends LitElement {
       <page-layout>
         <div slot="header" class="header">
           <app-nav></app-nav>
-          <theme-toggle></theme-toggle>
         </div>
         <div class="container">
           <div class="editor-section">

@@ -1,12 +1,13 @@
 import { consume, createContext } from '@lit/context';
 import { LitElement, css, html, nothing } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { FloatingMenu } from '../atomics/floating-menu.js';
 import type { Store } from '../state/store.js';
 import { buttonsCss } from '../styles/buttons.css.js';
 import { textareaCss } from '../styles/textarea.css.js';
 import typography from '../styles/typography.js';
 import { SystemMessage, Thread } from '../types.js';
+
 const threeDotSvg = html`
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="12" cy="5" r="2" fill="currentColor" />
@@ -14,6 +15,8 @@ const threeDotSvg = html`
     <circle cx="12" cy="19" r="2" fill="currentColor" />
   </svg>
 `;
+
+@customElement('chat-options')
 export class ChatOptions extends LitElement {
   static styles = [
     buttonsCss,
@@ -39,9 +42,8 @@ export class ChatOptions extends LitElement {
         align-items: center;
         justify-content: center;
         gap: 12px;
-        select {
-          margin: 0 5px;
-        }
+
+        select,
         textarea {
           margin: 0 5px;
         }
@@ -54,15 +56,13 @@ export class ChatOptions extends LitElement {
         min-width: 400px;
         max-width: 800px;
         padding: 0;
+
         .wrapper {
           display: flex;
           flex-direction: column;
           padding: 0;
+
           .scrollable {
-            align-self: stretch;
-            flex-direction: column;
-            align-items: stretch;
-            justify-items: flex-start;
             overflow-y: auto;
             max-height: 500px;
             p {
@@ -73,14 +73,15 @@ export class ChatOptions extends LitElement {
               }
             }
           }
+
           .buttons {
             align-self: stretch;
             display: flex;
             flex-direction: row;
-            align-items: center;
             justify-content: flex-end;
           }
         }
+
         &::backdrop {
           background-color: rgba(0, 0, 0, 0.5);
         }
@@ -88,15 +89,22 @@ export class ChatOptions extends LitElement {
     `
   ];
 
-  @property({ type: String }) engine = sessionStorage.getItem('engine') ?? 'gpt-4o-mini';
-  @property({ type: Boolean }) includeContext = JSON.parse(sessionStorage.getItem('include_context')) ?? true;
+  @property({ type: String })
+  engine = sessionStorage.getItem('engine') ?? 'gpt-4o-mini';
+
+  @property({ type: Boolean })
+  includeContext = JSON.parse(sessionStorage.getItem('include_context')) ?? true;
+
   @property({ type: String })
   systemMessage = sessionStorage.getItem('system_message') ?? `Your name is ChatGPT. You are a helpful assistant.`;
+
   @state() thread: Thread;
-  @state() activeThreadId: IDBValidKey;
   @state() stagedSystemMessage: SystemMessage;
-  sub1: { unsubscribe: () => void };
+
+  private sub1: { unsubscribe: () => void };
+
   @consume({ context: createContext<Store>('chat-store') }) store: Store;
+
   connectedCallback() {
     super.connectedCallback();
     this.sub1 = this.store.subscribe('activeThread', (thread) => {
@@ -110,82 +118,96 @@ export class ChatOptions extends LitElement {
     this.sub1.unsubscribe();
   }
 
+  get #engineOptionsTemplate() {
+    const engines = [
+      { value: 'gpt-4o-mini', label: '4o mini' },
+      { value: 'gpt-4o', label: '4o' },
+      { value: 'llama-3.3-70b', label: 'Llama 3.3 70B' },
+      { value: 'llama-3.2-3b', label: 'Llama 3.2 3B' },
+      { value: 'dolphin-2.9.2-qwen2-72b', label: 'Dolphin 2.9.2 Qwen2 72B' },
+      { value: 'llama-3.1-405b', label: 'Llama 3.1 405B' },
+      { value: 'qwen2.5-coder-32b', label: 'Qwen 2.5 Coder 32B' },
+      { value: 'deepseek-r1-671b', label: 'Deepseek R1 671B' },
+      { value: 'deepseek-r1-llama-70b', label: 'Deepseek R1 Llama 70B' },
+      { value: 'qwen-2.5-vl', label: 'Qwen 2.5 VL' }
+    ];
+
+    return engines.map(({ value, label }) => html`<option value="${value}">${label}</option>`);
+  }
+
+  handleEngineChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    this.store.updateThread({ selected_engine: select.value as any });
+  }
+
+  handleSystemMessageInput(event: Event) {
+    const textarea = event.target as HTMLTextAreaElement;
+    this.store.updateThread({ system_message: textarea.value });
+  }
+
+  handleTextareaKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      const floatingMenu = this.shadowRoot.querySelector('floating-menu') as FloatingMenu;
+      floatingMenu.close();
+    }
+  }
+
+  renderSystemMessages() {
+    return this.store.systemMessages.map(
+      (message) => html`
+        <p
+          class=${this.stagedSystemMessage === message ? 'active' : ''}
+          @click=${() => this.selectStagedSystemMessage(message)}>
+          ${message.text}
+        </p>
+      `
+    );
+  }
+
+  selectStagedSystemMessage(message: SystemMessage) {
+    this.stagedSystemMessage = message;
+  }
+
+  closeDialog() {
+    this.shadowRoot.querySelector('dialog').close();
+  }
+
+  selectSystemMessage() {
+    this.store.updateThread({ system_message: this.stagedSystemMessage.text });
+    this.closeDialog();
+    this.stagedSystemMessage = null;
+  }
   render() {
     if (!this.thread) return nothing;
+
     return html`
-        <floating-menu position="top">
-          <button slot="invoker">
-            ${threeDotSvg}
-          </button>
-          <div>
-            <select
-            id="engine"
-            .value=${this.thread.selected_engine}
-            @change=${(e) => {
-              this.store.updateThread({ selected_engine: e.target.value });
-            }}>
-            <option value="gpt-4o-mini">4o mini</option>
-            <option value="gpt-4o">4o</option>
-            <option value="llama-3.3-70b">Llama 3.3 70B</option>
-            <option value="llama-3.2-3b">Llama 3.2 3B</option>
-            <option value="dolphin-2.9.2-qwen2-72b">Dolphin 2.9.2 Qwen2 72B</option>
-            <option value="llama-3.1-405b">Llama 3.1 405B</option>
-            <option value="qwen2.5-coder-32b">Qwen 2.5 Coder 32B</option>
-            <option value="deepseek-r1-671b">Deepseek R1 671B</option>
-            <option value="deepseek-r1-llama-70b">Deepseek R1 Llama 70B</option>
-            <option value="qwen-2.5-vl">Qwen 2.5 VL</option>
+      <floating-menu position="top">
+        <button slot="invoker">${threeDotSvg}</button>
+        <div>
+          <select id="engine" .value=${this.thread.selected_engine} @change=${this.handleEngineChange}>
+            ${this.#engineOptionsTemplate}
           </select>
-          
+
           <textarea
-            type="text"
             placeholder="System Message"
             .value=${this.thread.system_message}
-            style="width: 300px; height: 16px;"
-            @input=${(e) => {
-              this.store.updateThread({ system_message: e.target.value });
-            }}
-            @keydown=${(e) => {
-              if (e.key === 'Enter') {
-                const floatingMenu = this.shadowRoot.querySelector('floating-menu') as FloatingMenu;
-                floatingMenu.close();
-              }
-            }} />
-            </textarea>
-            <button @click=${() => this.shadowRoot.querySelector('dialog').showModal()}>
-            ${threeDotSvg}
-          </button>
+            style="width: 300px;"
+            @input=${this.handleSystemMessageInput}
+            @keydown=${this.handleTextareaKeydown}></textarea>
+
+          <button @click=${() => this.shadowRoot.querySelector('dialog').showModal()}>${threeDotSvg}</button>
+        </div>
+      </floating-menu>
+
+      <dialog>
+        <div class="wrapper">
+          <div class="scrollable">${this.renderSystemMessages()}</div>
+          <div class="buttons">
+            <button @click=${this.closeDialog}>Cancel</button>
+            <button @click=${this.selectSystemMessage}>Select</button>
           </div>
-        </floating-menu>
-        <dialog>
-          <div class="wrapper">
-            <div class="scrollable">
-
-              ${this.store.systemMessages.map((message) => {
-                return html`<p
-                  class=${this.stagedSystemMessage === message ? 'active' : ''}
-                  @click=${() => {
-                    this.stagedSystemMessage = message;
-                  }}>
-                  ${message.text}
-                </p>`;
-              })}
-              </div>
-              <div class="buttons">
-              <button @click=${() => this.shadowRoot.querySelector('dialog').close()}>Cancel</button>
-
-                <button
-                @click=${() => {
-                  this.store.updateThread({ system_message: this.stagedSystemMessage.text });
-                  this.shadowRoot.querySelector('dialog').close();
-                  this.stagedSystemMessage = null;
-                }}>
-                Select
-              </button>
-              </div>
-      </div>
-        </dialog>
+        </div>
+      </dialog>
     `;
   }
 }
-
-customElements.define('chat-options', ChatOptions);

@@ -1,5 +1,7 @@
-github.com/evanw/esbuild v0.24.2 h1:PQExybVBrjHjN6/JJiShRGIXh1hWVm6NepVnhZhrt0A=
-github.com/evanw/esbuild v0.24.2/go.mod h1:D2vIQZqV/vIf/VRHtViaUtViZmG7o+kKmlBfVQuRi48=
+github.com/bencbradshaw/framework v0.0.2 h1:5wLXgo5j0BfFg+5fC7LZeV1WGSisoP9eBN3r2F2nm68=
+github.com/bencbradshaw/framework v0.0.2/go.mod h1:r/LrjCEwhh2kBGWLmLBUEL8QTsiE5W43cIMY/rNrmSA=
+github.com/evanw/esbuild v0.25.1 h1:u/16OWK0l4ymFFuHOApuv/xXg8U0P3QYBSMToll89HI=
+github.com/evanw/esbuild v0.25.1/go.mod h1:D2vIQZqV/vIf/VRHtViaUtViZmG7o+kKmlBfVQuRi48=
 golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.14.0 h1:Vz7Qs629MkJkGyHxUlRHizWJRG2j8fbQKjELVSNhy7Q=
 golang.org/x/sys v0.14.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=

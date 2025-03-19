@@ -39,7 +39,7 @@ func main() {
 		print("Build complete \n")
 		return
 	}
-	mux := framework.Run(framework.InitParams{
+	mux := framework.Run(&framework.InitParams{
 		IsDevMode: true,
 		EsbuildOpts: api.BuildOptions{
 			EntryPoints: []string{"./app/src/index.ts"},

@@ -122,6 +122,7 @@ export class ChatOptions extends LitElement {
     const engines = [
       { value: 'gpt-4o-mini', label: '4o mini' },
       { value: 'gpt-4o', label: '4o' },
+      { value: 'o3-mini', label: 'o3 mini' },
       { value: 'llama-3.3-70b', label: 'Llama 3.3 70B' },
       { value: 'llama-3.2-3b', label: 'Llama 3.2 3B' },
       { value: 'dolphin-2.9.2-qwen2-72b', label: 'Dolphin 2.9.2 Qwen2 72B' },

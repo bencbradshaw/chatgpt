@@ -26,7 +26,7 @@ func HandleChatRequest(w http.ResponseWriter, r *http.Request) {
 	var authToken string
 	var endpoint string
 	switch chatPrompt.Engine {
-	case "gpt-4o", "gpt-4o-mini":
+	case "gpt-4o", "gpt-4o-mini", "o3-mini":
 		authToken = os.Getenv(envOpenAiSk)
 		endpoint = openAiChatEndpoint
 	default:

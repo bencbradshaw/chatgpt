@@ -120,6 +120,9 @@ export class ChatOptions extends LitElement {
 
   get #engineOptionsTemplate() {
     const engines = [
+      { value: 'gpt-4.1-nano', label: '4.1 nano' },
+      { value: 'gpt-4.1-mini', label: '4.1 mini' },
+      { value: 'gpt-4.1', label: '4.1' },
       { value: 'gpt-4o-mini', label: '4o mini' },
       { value: 'gpt-4o', label: '4o' },
       { value: 'o3-mini', label: 'o3 mini' },

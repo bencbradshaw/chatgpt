@@ -136,7 +136,7 @@ export class Store extends StateStore {
       headline: 'thread',
       system_message: '',
       history: [],
-      selected_engine: 'gpt-4o-mini' as Engine,
+      selected_engine: 'gpt-5.1' as Engine,
       include_context: true
     };
     this.activeThreadId = await this.db.add('threads', thread);

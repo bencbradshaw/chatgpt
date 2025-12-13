@@ -10,7 +10,21 @@ a simple chatgpt web app, built with go and lit
 1. Select model for chat
 2. add system message
 3. add prompt
-4. indivudaually delete chat messages from the chat, removing from context no next request
+
+- drag and drop files into context
+- response streams in live
+- copy generated code snippets to clipboard
+
+4. individually delete chat messages from the chat, removing from context no next request
+5. switch threads for chat
+
+### stack
+
+- go -> 1 process runs it all. No Node JS. No `npm run dev`
+  - esbuild to transpile TS -> JS
+  - [framework](https://github.com/bencbradshaw/framework) -> web server + static file server + routing + templating
+- lit -> web components with reactive properties
+- [go-web-framework](https://github.com/bencbradshaw/framework) - routing, context, live reload on frontend change
 
 ### quick start
 

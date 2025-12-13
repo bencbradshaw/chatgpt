@@ -6,8 +6,7 @@ import (
 	"os"
 
 	"github.com/bencbradshaw/framework"
-
-	"github.com/evanw/esbuild/pkg/api"
+	esbuild "github.com/evanw/esbuild/pkg/api"
 )
 
 func cors(next http.HandlerFunc) http.HandlerFunc {
@@ -26,27 +25,27 @@ func cors(next http.HandlerFunc) http.HandlerFunc {
 func main() {
 	if os.Getenv("BUILD") == "true" {
 		buildParams := framework.InitParams{
-			EsbuildOpts: api.BuildOptions{
+			EsbuildOpts: esbuild.BuildOptions{
 				EntryPoints:       []string{"./app/src/index.ts"},
 				MinifyWhitespace:  true,
 				MinifyIdentifiers: true,
 				MinifySyntax:      true,
-				Sourcemap:         api.SourceMapNone,
+				Sourcemap:         esbuild.SourceMapNone,
 			},
 			AutoRegisterTemplateRoutes: true,
 		}
 		framework.Build(buildParams)
-		print("Build complete \n")
+		print("Build complete\n")
 		return
 	}
-	mux := framework.Run(&framework.InitParams{
+	mux := framework.Run(framework.InitParams{
 		IsDevMode: true,
-		EsbuildOpts: api.BuildOptions{
+		EsbuildOpts: esbuild.BuildOptions{
 			EntryPoints: []string{"./app/src/index.ts"},
 		},
 		AutoRegisterTemplateRoutes: true,
 	})
 	mux.Handle("/api/chat", cors(handlers.HandleChatRequest))
-	print("Server started at http://localhost:2025 \n")
+	print("Server started at http://localhost:2025\n")
 	http.ListenAndServe(":2025", mux)
 }

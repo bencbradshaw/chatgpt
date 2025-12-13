@@ -1,5 +1,3 @@
-github.com/bencbradshaw/framework v0.0.5 h1:YyYiRSWQjle+fjdqSrIZfyMV7gBRU7WmOnHl+jzVN/w=
-github.com/bencbradshaw/framework v0.0.5/go.mod h1:r/LrjCEwhh2kBGWLmLBUEL8QTsiE5W43cIMY/rNrmSA=
 github.com/bencbradshaw/framework v0.0.14 h1:ttgCkHCtGQkS473/sFYIX481exw01fVim+FwjCHpk8g=
 github.com/bencbradshaw/framework v0.0.14/go.mod h1:r/LrjCEwhh2kBGWLmLBUEL8QTsiE5W43cIMY/rNrmSA=
 github.com/evanw/esbuild v0.25.1 h1:u/16OWK0l4ymFFuHOApuv/xXg8U0P3QYBSMToll89HI=

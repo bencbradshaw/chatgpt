@@ -8,7 +8,12 @@ build:
 	export BUILD=true && go run main.go
 	go build -o public/main main.go 
 	GOARCH=amd64 GOOS=linux go build -o linux/main main.go
+	GOARCH=arm64 GOOS=darwin go build -o mac/main main.go
 	cp -r static public/
 	cp -r templates public/
 	cp -r static linux/
 	cp -r templates linux/
+	cp -r static mac/
+	cp -r templates mac/
+clean:
+	rm -rf static public linux mac

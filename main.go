@@ -39,7 +39,6 @@ func main() {
 		return
 	}
 	mux := framework.Run(framework.InitParams{
-		IsDevMode: true,
 		EsbuildOpts: esbuild.BuildOptions{
 			EntryPoints: []string{"./app/src/index.ts"},
 		},

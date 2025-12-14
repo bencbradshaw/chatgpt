@@ -58,5 +58,5 @@ make
 make build
 ```
 
-- macOS build is in the `public` folder
+- macOS build is in the `mac` folder
 - Linux build is in the `linux` folder

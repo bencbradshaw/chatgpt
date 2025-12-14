@@ -13,17 +13,18 @@ import (
 )
 
 const (
-	openAiBaseUrl        = "https://api.openai.com/v1"
-	veniceAiBaseUrl      = "https://api.venice.ai/api/v1"
-	openAiChatEndpoint   = openAiBaseUrl + "/chat/completions"
-	veniceAiChatEndpoint = veniceAiBaseUrl + "/chat/completions"
-	contentTypeHeader    = "Content-Type"
-	contentTypeJSON      = "application/json"
-	authHeaderFmt        = "Bearer %s"
-	envOpenAiSk          = "OPEN_AI_SK"
-	envVeniceAiSk        = "VENICE_AI_SK"
-	accessControlAllow   = "Access-Control-Allow-Origin"
-	accessControlHeaders = "Access-Control-Allow-Headers"
+	openAiBaseUrl           = "https://api.openai.com/v1"
+	veniceAiBaseUrl         = "https://api.venice.ai/api/v1"
+	openAiChatEndpoint      = openAiBaseUrl + "/chat/completions"
+	openAiResponsesEndpoint = openAiBaseUrl + "/responses"
+	veniceAiChatEndpoint    = veniceAiBaseUrl + "/chat/completions"
+	contentTypeHeader       = "Content-Type"
+	contentTypeJSON         = "application/json"
+	authHeaderFmt           = "Bearer %s"
+	envOpenAiSk             = "OPEN_AI_SK"
+	envVeniceAiSk           = "VENICE_AI_SK"
+	accessControlAllow      = "Access-Control-Allow-Origin"
+	accessControlHeaders    = "Access-Control-Allow-Headers"
 )
 
 var httpClient = &http.Client{}
@@ -98,6 +99,58 @@ func processChatStream(openAIStream io.Reader, w http.ResponseWriter) {
 			}
 		}
 		jsonStr = ""
+	}
+}
+
+func processResponsesStream(openAIStream io.Reader, w http.ResponseWriter) {
+	w.Header().Set(contentTypeHeader, "text/event-stream")
+	w.Header().Set(accessControlAllow, "*")
+
+	reader := bufio.NewReader(openAIStream)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			log.Println("Error reading responses stream:", err)
+			break
+		}
+
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+
+		if !strings.HasPrefix(trimmed, "data: ") {
+			continue
+		}
+
+		data := strings.TrimPrefix(trimmed, "data: ")
+		if data == "[DONE]" {
+			break
+		}
+
+		var event struct {
+			Type  string `json:"type"`
+			Delta string `json:"delta"`
+			Text  string `json:"text"`
+		}
+		if err := json.Unmarshal([]byte(data), &event); err != nil {
+			continue
+		}
+
+		// Only send delta chunks, not the final complete text
+		// The Responses API sends a final event with the full text, but we've already streamed all deltas
+		if event.Delta != "" {
+			if _, err := w.Write([]byte(event.Delta)); err != nil {
+				// Client disconnected, stop streaming
+				break
+			}
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+		}
 	}
 }
 func respondWithJSON(w http.ResponseWriter, payload interface{}) {

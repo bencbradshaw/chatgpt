@@ -32,6 +32,11 @@ export class ApiService {
       ],
       engine
     };
-    return new TextEventStream(await ApiService.post('/api/chat', reqBody));
+    const response = await ApiService.post('/api/chat', reqBody);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API error (${response.status}): ${errorText}`);
+    }
+    return new TextEventStream(response);
   }
 }

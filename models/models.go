@@ -11,9 +11,15 @@ type Message struct {
 }
 
 type ChatRequest struct {
-	Model    string    `json:"model"`
-	Messages []Message `json:"messages"`
-	Stream   bool      `json:"stream"`
+	Model    string      `json:"model"`
+	Messages interface{} `json:"messages"`
+	Stream   bool        `json:"stream"`
+}
+
+type ResponsesRequest struct {
+	Model  string      `json:"model"`
+	Input  interface{} `json:"input"`
+	Stream bool        `json:"stream"`
 }
 
 type ChatPrompt struct {

@@ -66,17 +66,28 @@ export class Store extends StateStore {
       role: 'assistant',
       content: ''
     };
-    const response = await this.apiService.postToChat(
-      this.activeThread.history,
-      this.activeThread.selected_engine,
-      this.activeThread.system_message
-    );
-    this.addMessage(assistantMessage);
-    this.stagedFiles = [];
-    this.loading = false;
-    this.#emit('loading');
-    for await (const message of response) {
-      this.addToMessageContent(message, this.activeThread.history.length - 1);
+    try {
+      const response = await this.apiService.postToChat(
+        this.activeThread.history,
+        this.activeThread.selected_engine,
+        this.activeThread.system_message
+      );
+      this.addMessage(assistantMessage);
+      this.stagedFiles = [];
+      this.loading = false;
+      this.#emit('loading');
+      for await (const message of response) {
+        this.addToMessageContent(message, this.activeThread.history.length - 1);
+      }
+    } catch (error: { message?: string }) {
+      this.loading = false;
+      this.#emit('loading');
+      console.error('Error submitting chat:', error);
+      const errorMessage: ChatHistoryItem = {
+        role: 'assistant',
+        content: `Error: ${error?.message || 'Failed to get response'}`
+      };
+      this.addMessage(errorMessage);
     }
   }
 

@@ -13,6 +13,7 @@ export class Store extends StateStore {
   @prop() loading = false;
   @prop() stagedFiles: IFile[] = [];
   @prop() systemMessages: SystemMessage[] = [];
+  #streamController: AbortController | null = null;
 
   constructor(private apiService: ApiService) {
     super();
@@ -66,6 +67,9 @@ export class Store extends StateStore {
       role: 'assistant',
       content: ''
     };
+    const streamThreadId = this.activeThreadId;
+    this.#streamController = new AbortController();
+    const signal = this.#streamController.signal;
     try {
       const response = await this.apiService.postToChat(
         this.activeThread.history,
@@ -73,13 +77,24 @@ export class Store extends StateStore {
         this.activeThread.system_message
       );
       this.addMessage(assistantMessage);
+      const messageIndex = this.activeThread.history.length - 1;
       this.stagedFiles = [];
       this.loading = false;
       this.#emit('loading');
       for await (const message of response) {
-        this.addToMessageContent(message, this.activeThread.history.length - 1);
+        if (signal.aborted) {
+          break;
+        }
+        if (this.activeThreadId === streamThreadId) {
+          this.addToMessageContent(message, messageIndex);
+        } else {
+          await this.#addToMessageContentBackground(message, messageIndex, streamThreadId);
+        }
       }
     } catch (error: { message?: string }) {
+      if (signal.aborted) {
+        return;
+      }
       this.loading = false;
       this.#emit('loading');
       console.error('Error submitting chat:', error);
@@ -88,6 +103,8 @@ export class Store extends StateStore {
         content: `Error: ${error?.message || 'Failed to get response'}`
       };
       this.addMessage(errorMessage);
+    } finally {
+      this.#streamController = null;
     }
   }
 
@@ -132,7 +149,21 @@ export class Store extends StateStore {
     this.db.put('threads', this.activeThread);
   }
 
+  async #addToMessageContentBackground(message: string, index: number, threadId: IDBValidKey) {
+    const thread = await this.db.get<Thread>('threads', threadId);
+    if (thread && thread.history[index]) {
+      thread.history[index].content += message;
+      await this.db.put('threads', { id: threadId, ...thread });
+    }
+  }
+
   async selectThread(threadId: IDBValidKey) {
+    if (this.#streamController) {
+      this.#streamController.abort();
+      this.#streamController = null;
+      this.loading = false;
+      this.#emit('loading');
+    }
     this.activeThreadId = threadId;
     this.activeThread = {
       id: this.activeThreadId,

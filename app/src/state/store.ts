@@ -91,7 +91,7 @@ export class Store extends StateStore {
           await this.#addToMessageContentBackground(message, messageIndex, streamThreadId);
         }
       }
-    } catch (error: { message?: string }) {
+    } catch (error: any) {
       if (signal.aborted) {
         return;
       }

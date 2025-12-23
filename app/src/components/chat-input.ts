@@ -56,9 +56,27 @@ class ChatInput extends LitElement {
         justify-content: center;
         padding: 0.5rem;
         margin: 0 auto;
+        position: relative;
+      }
+
+      chat-options {
+        position: absolute;
+        left: 1.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      textarea {
+        padding-left: 3rem;
+        padding-right: 3rem;
+        box-shadow: var(--box-shadow-1);
       }
 
       .buttons {
+        position: absolute;
+        right: 1.5rem;
+        top: 50%;
+        transform: translateY(-50%);
         display: flex;
         flex-direction: column;
         justify-content: flex-start;

@@ -34,25 +34,24 @@ export class MainLayout extends LitElement {
 
     main {
       background-color: var(--chatbox-bg-color);
-      grid-row: 2 / 3;
+      grid-row: 2 / 4;
       grid-column: 2 / 3;
       display: flex;
       flex-direction: column;
-      overflow-y: hidden;
-      border-top-left-radius: 20px;
-      border-top-right-radius: 20px;
-      margin: 20px 0.5rem 0 0.5rem;
+      overflow-y: auto;
+      border-radius: 20px;
+      margin: 20px 0.5rem 0.5rem 0.5rem;
       max-width: calc(100vw - var(--nav-width));
     }
 
     footer {
-      background-color: var(--chatbox-bg-color);
       grid-row: 3 / 4;
       grid-column: 2 / 3;
       border-bottom-right-radius: 20px;
       border-bottom-left-radius: 20px;
       margin: 0 0.5rem 0.5rem 0.5rem;
       max-width: calc(100vw - var(--nav-width));
+      z-index: 1;
     }
   `;
 

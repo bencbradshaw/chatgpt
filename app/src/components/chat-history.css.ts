@@ -40,6 +40,7 @@ export default css`
     justify-content: flex-start;
     overflow-y: auto;
     max-width: 100%;
+    padding-bottom: 130px;
   }
   .history {
     width: 800px;

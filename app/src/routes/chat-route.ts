@@ -12,6 +12,9 @@ import '../components/chat-threads.js';
 
 @customElement('chat-route')
 export class ChatRoute extends LitElement {
+  createRenderRoot() {
+    return this;
+  }
   render() {
     return html`
       <chat-provider>

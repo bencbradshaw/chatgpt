@@ -179,4 +179,64 @@ export default css`
   tr:nth-child(even) {
     background-color: #353d48;
   }
+
+  /* Compact markdown styles */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  h3 {
+    font-size: 1.15rem;
+  }
+
+  h4,
+  h5,
+  h6 {
+    font-size: 1rem;
+  }
+
+  p {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+  }
+
+  ul,
+  ol {
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+  }
+
+  li {
+    margin-top: 0.125rem;
+    margin-bottom: 0.125rem;
+    line-height: 1.4;
+  }
+
+  ul ul,
+  ol ul,
+  ul ol,
+  ol ol {
+    margin-top: 0.125rem;
+    margin-bottom: 0.125rem;
+  }
+  hr {
+    margin: 1rem 0;
+  }
 `;

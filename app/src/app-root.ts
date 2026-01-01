@@ -18,23 +18,48 @@ declare global {
 
 @customElement('app-root')
 export class AppRoot extends LitElement {
+  #router: Router | null = null;
+
   connectedCallback(): void {
     super.connectedCallback();
     const router = new Router(this);
+    this.#router = router;
     router.baseUrl = '/app';
+
     router.addRoute({
       path: '/',
-      component: 'chat-route',
-      importer: () => import('./routes/chat-route.js'),
-      title: 'Chat'
+      redirect: '/app/chat/'
     });
+
     router.addRoute({
       path: '/system-messages',
       component: 'system-messages',
       importer: () => import('./routes/system-messages-route.js'),
       title: 'System Messages'
     });
+    router.addRoute({
+      path: '/chat/:id',
+      component: 'chat-route',
+      importer: () => import('./routes/chat-route.js'),
+      title: 'Chat'
+    });
+    router.addRoute({
+      path: '/chat/',
+      component: 'chat-route',
+      importer: () => import('./routes/chat-route.js'),
+      title: 'Chat'
+    });
+    router.addRoute({
+      path: '*',
+      redirect: '/app/chat/'
+    });
     router.navigate(window.location.pathname);
     window.router = router;
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#router?.destroy();
+    this.#router = null;
   }
 }

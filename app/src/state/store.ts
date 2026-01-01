@@ -7,6 +7,7 @@ import { IDB } from './idb.js';
 
 export class Store extends StateStore {
   private db: IDB = new IDB();
+  public readonly ready: Promise<void>;
   @prop() activeThreadId: IDBValidKey;
   @prop() activeThread: Thread;
   @prop() threads: Thread[] = [];
@@ -17,7 +18,7 @@ export class Store extends StateStore {
 
   constructor(private apiService: ApiService) {
     super();
-    this.initDB().then(() => this.#emit('activeThread'));
+    this.ready = this.initDB().then(() => this.#emit('activeThread'));
   }
 
   async initDB() {
@@ -187,6 +188,7 @@ export class Store extends StateStore {
       ...thread
     };
     this.threads = await this.db.getAll('threads');
+    await this.db.put('indices', this.activeThreadId, 'activeThreadId');
     this.#emit('activeThread');
   }
 
